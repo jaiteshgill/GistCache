@@ -7,6 +7,7 @@ Spend is hard-capped. Order: variants (small), stream (stops at 70% of cap), jud
 """
 import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor
 import random
 import time
 from collections import Counter, defaultdict
@@ -127,6 +128,7 @@ def main():
     p.add_argument("--cap", type=float, default=0.45, help="hard USD spend cap")
     p.add_argument("--max-tokens", type=int, default=300, help="cap on every answer length")
     p.add_argument("--rng", type=int, default=7)
+    p.add_argument("--workers", type=int, default=8, help="parallel calls for variants and judging")
     p.add_argument("--dry-run", action="store_true")
     a = p.parse_args()
 
@@ -142,7 +144,7 @@ def main():
     out_dir.mkdir(exist_ok=True)
 
     vpath = HERE / "data" / ("variants_dry.json" if a.dry_run else "variants.json")
-    variants = generate(small, seeds, vpath)
+    variants = generate(small, seeds, vpath, a.workers)
     queries = build_queries(variants, rng)
     print(f"{len(variants)} seeds -> {len(queries)} queries; variants cost so far ${tracker.total:.4f}")
 
@@ -161,15 +163,18 @@ def main():
         rows.append({**q, "tier": r.tier, "reason": r.reason, "cost": r.cost_usd, "ms": r.latency_ms, "text": r.text})
         print(f"[{i + 1}/{len(queries)}] {q['kind']:10} -> {r.tier:8} {r.reason[:48]}")
 
-    n_unjudged = 0
-    for r in rows:
-        if r["tier"] not in ("hit", "near_hit"):
-            continue
+    def grade(r):
         try:
             ref = large.complete([{"role": "user", "content": r["query"]}], max_tokens=a.max_tokens).text
             r["ok"] = judge(small, r["query"], ref, r["text"])
+            return 0
         except BudgetExceeded:
-            n_unjudged += 1
+            return 1
+
+    served = [r for r in rows if r["tier"] in ("hit", "near_hit")]
+    print(f"judging {len(served)} reused answers ({a.workers} in parallel)...")
+    with ThreadPoolExecutor(a.workers) as ex:
+        n_unjudged = sum(ex.map(grade, served))
 
     mean_large = tracker.spent["large"] / tracker.calls["large"] if tracker.calls["large"] else 0.0
     md = report(rows, tracker, mean_large, stopped, n_unjudged)

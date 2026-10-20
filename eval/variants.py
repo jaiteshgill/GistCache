@@ -1,6 +1,7 @@
 """Generate labelled variants of each seed with the small model. Cached on disk so reruns are free."""
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 PROMPT = """You are building a test set for a semantic cache. For the user prompt below, write three variants.
@@ -27,16 +28,21 @@ def parse(text: str) -> dict | None:
     return d if all(isinstance(d.get(k), str) and d[k].strip() for k in ("paraphrase", "patchable", "critical")) else None
 
 
-def generate(small, seeds: list[str], cache_path: Path) -> dict[str, dict]:
+def _one(small, seed: str) -> dict | None:
+    for _ in range(2):  # one retry on malformed output
+        d = parse(small.complete([{"role": "user", "content": PROMPT.format(seed=seed)}], max_tokens=400).text)
+        if d:
+            return d
+    return None
+
+
+def generate(small, seeds: list[str], cache_path: Path, workers: int = 8) -> dict[str, dict]:
     cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
-    for s in seeds:
-        if s in cache:
-            continue
-        for _ in range(2):  # one retry on malformed output
-            d = parse(small.complete([{"role": "user", "content": PROMPT.format(seed=s)}], max_tokens=400).text)
+    todo = [s for s in seeds if s not in cache]
+    with ThreadPoolExecutor(workers) as ex:
+        for s, d in zip(todo, ex.map(lambda s: _one(small, s), todo)):
             if d:
                 cache[s] = d
-                break
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(cache, indent=1))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(cache, indent=1))
     return {s: cache[s] for s in seeds if s in cache}
