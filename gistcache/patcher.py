@@ -67,16 +67,26 @@ def patch_detail(provider: Provider, old_q: str, answer: str, new_q: str, diffs:
     return ok, c, reason
 
 
+# Markup (table pipes, list dashes, code fences) adds a roughly fixed number of characters, which dominates on a
+# short answer: a correct 3-row table of a 113-character answer is 224 characters. A pure ratio rejected such
+# patches, so the limit is the larger of the ratio and the cached length plus this slack. Long answers are
+# unaffected because the ratio is the larger term.
+MARKUP_SLACK = 150
+
+# Requests whose correct answer may legitimately be much shorter than the cached one.
+_SHORTENING = ("brief", "short", "concise", "tl;dr", "eli5", "list", "bullet", "table", "json", "yaml", "csv",
+               "summar", "one sentence", "one line", "in a sentence")
+
+
 def check(text: str, cached: str, new_q: str, max_ratio: float) -> tuple[str | None, str]:
     t = text.strip()
     if not t:
         return None, "empty"
     if CANNOT_PATCH in t:
         return None, "cannot_patch"
-    if len(t) > max_ratio * max(len(cached), 1):
-        return None, "too_long"  # grew too much: probably new content (or heavy markup on a short answer)
-    brief = any(w in new_q.lower() for w in ("brief", "short", "concise", "tl;dr", "eli5"))
-    if len(t) < 0.2 * len(cached) and not brief:
+    if len(t) > max(max_ratio * len(cached), len(cached) + MARKUP_SLACK):
+        return None, "too_long"  # grew too much: probably new content
+    if len(t) < 0.2 * len(cached) and not any(w in new_q.lower() for w in _SHORTENING):
         return None, "too_short"
     return t, "ok"
 

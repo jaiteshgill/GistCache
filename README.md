@@ -178,17 +178,21 @@ The patcher is a small model with a strict job: adapt a cached answer to a new q
 
 ### Patcher rules
 
-1. Preserve all information in the cached answer that is still valid for the new query.
-2. Change only what the listed differences require.
-3. Do not add facts that are not in the cached answer.
-4. If the new query needs information the cached answer does not contain, reply only with `CANNOT_PATCH`.
+The prompt (`patcher.prompt: v2`, the default) tells the small model what it may and may not do:
+
+- **May:** restructure what is already there (prose to a table, a list, JSON or a paragraph; reorder; change sort order), condense when asked to be brief, simplify wording using only ideas already present, and select the part of the answer that satisfies a narrowing constraint. None of this counts as inventing facts.
+- **Must not:** add facts, steps, numbers, names, examples or code that are not in the cached answer, or change the meaning of anything it keeps.
+- **Refuse:** reply exactly `CANNOT_PATCH` only when a correct answer would need content the cached answer lacks (a new example, a new comparison, extra detail). Presenting existing content differently is not new information.
+
+The original, stricter prompt is kept as `v1` (`patcher.prompt: v1`). Prompt v1 refused pure reformatting requests such as "in a short table"; see the A/B below.
 
 ### Output validation
 
-A patched answer is rejected and sent to the large model when:
-- The patcher returns `CANNOT_PATCH`
-- The output is empty or far shorter than the cached answer without a reason (such as a "briefly" request)
-- The output is longer than a configured ratio of the cached answer, which suggests new content was generated
+A patched answer is rejected and the request goes to the large model when, and the reason is logged as `near_hit fallback: <REASON>`:
+- `CANNOT_PATCH`: the patcher refused.
+- `EMPTY`: the output is empty.
+- `TOO_LONG`: the output is longer than the larger of `max_length_ratio` times the cached answer or the cached length plus 150 characters. The slack exists because table, list and code-fence markup is a roughly fixed number of characters that dominates a short answer; a pure ratio rejected a correct 192-character table of a 113-character answer. On long answers the ratio is the larger term and still catches invented content.
+- `TOO_SHORT`: the output is under a fifth of the cached answer, unless the request asks for something short or structured (brief, list, bullets, table, JSON, summary).
 
 Patching is only worth it if it is actually cheaper. The evaluation counts the full cost of the patch call plus every fallback, not just the successful patches.
 
@@ -337,7 +341,7 @@ patcher:
   enabled: true
   max_length_ratio: 1.5
   cache_patched_answers: false
-  prompt: v1                   # v1 = strict original; v2 = allows pure reformatting (validate with eval.patcher_check)
+  prompt: v2                   # v2 = pure reformatting is allowed (default); v1 = the strict original
 
 cache:
   path: ./data/gistcache.db
@@ -536,6 +540,7 @@ The fresh set is the honest figure. Before the contradiction guard it was 50/69 
 - **Borderline judge:** it promoted 5 paraphrases to hits in run 2, all judged acceptable. A promoted hit takes about 1.2 s against 0.1 s for a plain hit.
 - **Cost:** pipeline $0.195 in both runs against an estimated $0.289 with no cache (32 to 33% saved). The baseline is the query count times the mean large-model call, and at most half of this stream could ever be reused. Total reuse was 35 of 96 in both runs: the 5 extra hits were offset by more near-hit attempts ending in `CANNOT_PATCH`, each of which wastes a small-model call and then pays for the large model anyway. The patcher is not deterministic, so near-hit counts vary between runs.
 - **Latency** (run 2): hits 0.4 s on average (0.1 s plain, 1.2 s judge-promoted), near-hits 3.3 s, misses 4.6 s. Near-hits save cost but little time because the small model rewrites the whole answer.
+- **Patcher prompt A/B** (`python -m eval.patcher_check`, run twice; 12 near-hit cases from the pilot plus 8 synthetic controls; the small model grades each patched output for format and added facts): v2 patched 10 and 11 of the 12 real cases against 10 and 9 for v1, met the requested format in 21 of 21 patched outputs against 15 of 19 for v1, and added no facts in either prompt. Both prompts correctly refused all four synthetic cases that need content the cached answer lacks. v1 itself varied between runs (refusing 2, then 3 real cases, against 5 in the pilot), so differences of one or two cases are noise; the format difference is the consistent signal. The A/B also exposed that the length check, not the model, was rejecting correct reformatting of short answers, which is fixed above. Small sample, graded by the same model family.
 - **A close call:** in run 2 a critical variant ("a cowardly rabbit") reached a near-hit attempt against a cached "brave rabbit" answer, because a harmless wording difference ("short" vs "brief") explained the pair and nothing checked the swapped word. Only the patcher's refusal stopped it. The verifier now sends any near-hit with a hidden content swap through the contradiction guard (`content_substituted`), and the real pair is vetoed with a contradiction score of 1.00. The pilot has not been rerun since this fix.
 - **Caveats:** small sample; seeds written by hand; variants and judge both from the Claude family; answers truncated at 300 tokens; two runs only.
 
