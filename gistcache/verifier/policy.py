@@ -14,14 +14,19 @@ class Decision:
     differences: list[Difference] = field(default_factory=list)
 
 
-def decide(diffs: list[Difference], score: float, hit_threshold: float, near_threshold: float) -> Decision:
+def decide(diffs: list[Difference], score: float, hit_threshold: float, near_threshold: float,
+           cosine: float | None = None) -> Decision:
+    """`score` is the cross-encoder (duplicate-detection) score. It gates hits only.
+    Near-hits are gated on cosine: the rules already explained the difference, and a duplicate
+    detector would (correctly) call "sort ascending" and "sort descending" non-duplicates."""
+    gate = score if cosine is None else cosine
     crit = [d for d in diffs if d.severity == CRITICAL]
     if crit:
         return Decision(MISS, f"miss: {crit[0].detail or crit[0].kind}" if crit[0].kind != "entity"
                         else f"miss: entity {crit[0].detail}", score, diffs)
     if not diffs and score >= hit_threshold:
         return Decision(HIT, "hit: paraphrase", score, diffs)
-    if diffs and score >= near_threshold:
+    if diffs and gate >= near_threshold:
         return Decision(NEAR_HIT, f"near_hit: {diffs[0].kind.replace('_', ' ')}", score, diffs)
     if not diffs and score >= near_threshold:
         return Decision(MISS, "miss: below hit threshold", score, diffs)

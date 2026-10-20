@@ -75,7 +75,7 @@ class Pipeline:
                 e = entries[pos]
                 diffs = extract_differences(e.query, query)
                 d = decide(diffs, self.scorer.score(e.query, query, c),
-                           cfg["verifier"]["hit_threshold"], cfg["verifier"]["near_threshold"])
+                           cfg["verifier"]["hit_threshold"], cfg["verifier"]["near_threshold"], cosine=c)
                 rank = {HIT: 2, NEAR_HIT: 1, MISS: 0}[d.tier]
                 if best is None or (rank, d.score) > (best[0], best[1].score):
                     best = (rank, d, e, c)

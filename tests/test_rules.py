@@ -35,3 +35,19 @@ def test_patchable(a, b, kind):
 
 def test_paraphrase_has_no_differences():
     assert extract_differences("how do I reset my password", "how can I reset my password") == []
+
+
+def test_contraction_is_not_an_entity():
+    assert "entity" not in kinds("explain machine learning", "explain machine learning like I'm five")
+
+
+def test_including_is_a_constraint():
+    assert "constraint" in kinds("implement binary search", "implement binary search including examples")
+
+
+def test_format_words_are_not_entities():
+    assert "entity" not in kinds("show example records", "show example records as JSON")
+
+
+def test_list_as_noun_is_not_a_format():
+    assert kinds("what is the difference between a list and a tuple", "how do lists and tuples differ") == set()

@@ -14,10 +14,13 @@ _LANGS = ["python", "java", "javascript", "typescript", "rust", "go", "golang", 
 _VERSION = re.compile(r"\b(?:v|version\s*)?(\d+(?:\.\d+)*)\b")
 _TIME = re.compile(r"\b(latest|today|current|currently|now|price|prices|recent|news|tonight|tomorrow|yesterday|this (?:week|month|year))\b")
 
-_FORMATS = ["list", "table", "json", "yaml", "csv", "markdown", "bullet", "paragraph", "xml"]
+_FORMAT_WORDS = ["table", "json", "yaml", "csv", "markdown", "bullet", "paragraph", "xml"]
+# "list" is also a noun/verb ("sort a list"), so it only counts as a format when requested as one.
+_LIST_FORMAT = re.compile(r"\b(?:as|in|into)\s+(?:a\s+|an\s+)?(?:bulleted\s+|numbered\s+)?list\b")
+_FORMATS = _FORMAT_WORDS + ["list"]
 _ORDERS = [("ascending", "descending"), ("asc", "desc"), ("increasing", "decreasing")]
 _VERBOSITY = re.compile(r"\b(briefly|brief|short|concise|detailed|in detail|eli5|like i'?m five|step by step|verbose|tl;?dr)\b")
-_NARROW = re.compile(r"\b(with|add|using|include)\s+(comments|type hints|docstrings|tests|examples|error handling)\b")
+_NARROW = re.compile(r"\b(with|add|using|include|including|includes)\s+(comments|type hints|docstrings|tests|examples|error handling)\b")
 
 
 @dataclass(frozen=True)
@@ -46,12 +49,23 @@ def _langs(t: str) -> set[str]:
 def _caps(t: str) -> set[str]:
     # Capitalized tokens not at sentence start, as a cheap entity proxy.
     toks = re.findall(r"\S+", t)
-    return {x.strip(".,?!\"'").lower() for i, x in enumerate(toks) if i > 0 and x[:1].isupper() and len(x) > 1}
+    caps = {x.strip(".,?!\"'").lower() for i, x in enumerate(toks)
+            if i > 0 and x[:1].isupper() and len(x) > 1 and "'" not in x}  # skip contractions like I'm
+    return caps - set(_FORMATS)
 
 
 def _order_of(t: str, a: str, b: str) -> str | None:
     w = _words(t)
     return a if a in w else b if b in w else None
+
+
+def _formats(lower: str, words: set[str]) -> set[str]:
+    found = {f for f in _FORMAT_WORDS if f in words}
+    if "bullets" in words or "points" in words and "bullet" in words:
+        found.add("bullet")
+    if _LIST_FORMAT.search(lower):
+        found.add("list")
+    return found
 
 
 def extract_differences(a: str, b: str) -> list[Difference]:
@@ -86,7 +100,7 @@ def extract_differences(a: str, b: str) -> list[Difference]:
     if ea != eb and (ea | eb) - (ea & eb) - _langs(a) - _langs(b):
         diffs.append(Difference("entity", CRITICAL, f"{sorted(ea - eb)} -> {sorted(eb - ea)}"))
 
-    fa, fb = {f for f in _FORMATS if f in wa}, {f for f in _FORMATS if f in wb}
+    fa, fb = _formats(la, wa), _formats(lb, wb)
     if fa != fb:
         diffs.append(Difference("output_format", PATCHABLE, f"{sorted(fa)} -> {sorted(fb)}"))
 

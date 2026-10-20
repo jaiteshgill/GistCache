@@ -1,0 +1,118 @@
+{"id": "negation-00", "category": "negation", "cached": "should I cancel my order", "new": "should I not cancel my order", "expected": "miss", "split": "dev"}
+{"id": "negation-01", "category": "negation", "cached": "how do I enable notifications on my phone", "new": "how do I disable notifications on my phone", "expected": "miss", "split": "test"}
+{"id": "negation-02", "category": "negation", "cached": "is it safe to eat raw eggs", "new": "is it not safe to eat raw eggs", "expected": "miss", "split": "dev"}
+{"id": "negation-03", "category": "negation", "cached": "write a function that includes duplicates", "new": "write a function that excludes duplicates", "expected": "miss", "split": "test"}
+{"id": "negation-04", "category": "negation", "cached": "can I use this library commercially", "new": "can't I use this library commercially", "expected": "miss", "split": "dev"}
+{"id": "negation-05", "category": "negation", "cached": "how to cook rice with salt", "new": "how to cook rice without salt", "expected": "miss", "split": "test"}
+{"id": "negation-06", "category": "negation", "cached": "why does my code work", "new": "why doesn't my code work", "expected": "miss", "split": "dev"}
+{"id": "negation-07", "category": "negation", "cached": "explain recursion with examples", "new": "explain recursion without examples", "expected": "miss", "split": "test"}
+{"id": "negation-08", "category": "negation", "cached": "should I invest in bonds", "new": "should I never invest in bonds", "expected": "miss", "split": "dev"}
+{"id": "negation-09", "category": "negation", "cached": "how to make a website with JavaScript", "new": "how to make a website without JavaScript", "expected": "miss", "split": "test"}
+{"id": "negation-10", "category": "negation", "cached": "is Python a compiled language", "new": "is Python not a compiled language", "expected": "miss", "split": "dev"}
+{"id": "negation-11", "category": "negation", "cached": "tell me what to do if the test passes", "new": "tell me what to do if the test fails", "expected": "miss", "split": "test"}
+{"id": "number-00", "category": "number", "cached": "split the class into 3 groups", "new": "split the class into 5 groups", "expected": "miss", "split": "dev"}
+{"id": "number-01", "category": "number", "cached": "give me 10 ideas for a startup", "new": "give me 20 ideas for a startup", "expected": "miss", "split": "test"}
+{"id": "number-02", "category": "number", "cached": "what is 15% of 200", "new": "what is 25% of 200", "expected": "miss", "split": "dev"}
+{"id": "number-03", "category": "number", "cached": "write a 500 word essay on climate change", "new": "write a 1000 word essay on climate change", "expected": "miss", "split": "test"}
+{"id": "number-04", "category": "number", "cached": "how do I train for a 5k race", "new": "how do I train for a 10k race", "expected": "miss", "split": "dev"}
+{"id": "number-05", "category": "number", "cached": "plan a 3 day trip to Rome", "new": "plan a 7 day trip to Rome", "expected": "miss", "split": "test"}
+{"id": "number-06", "category": "number", "cached": "generate a password with 8 characters", "new": "generate a password with 16 characters", "expected": "miss", "split": "dev"}
+{"id": "number-07", "category": "number", "cached": "what happened in 1990", "new": "what happened in 1995", "expected": "miss", "split": "test"}
+{"id": "number-08", "category": "number", "cached": "summarize this in 2 sentences", "new": "summarize this in 5 sentences", "expected": "miss", "split": "dev"}
+{"id": "number-09", "category": "number", "cached": "how many ounces are in 2 cups", "new": "how many ounces are in 4 cups", "expected": "miss", "split": "test"}
+{"id": "number-10", "category": "number", "cached": "list the top 5 programming languages", "new": "list the top 10 programming languages", "expected": "miss", "split": "dev"}
+{"id": "number-11", "category": "number", "cached": "round 3.14159 to 2 decimals", "new": "round 3.14159 to 4 decimals", "expected": "miss", "split": "test"}
+{"id": "language-00", "category": "language", "cached": "reverse a string in Python", "new": "reverse a string in Go", "expected": "miss", "split": "dev"}
+{"id": "language-01", "category": "language", "cached": "read a file in Java", "new": "read a file in Rust", "expected": "miss", "split": "test"}
+{"id": "language-02", "category": "language", "cached": "write a for loop in JavaScript", "new": "write a for loop in C++", "expected": "miss", "split": "dev"}
+{"id": "language-03", "category": "language", "cached": "how to connect to a database in PHP", "new": "how to connect to a database in Ruby", "expected": "miss", "split": "test"}
+{"id": "language-04", "category": "language", "cached": "parse JSON in Swift", "new": "parse JSON in Kotlin", "expected": "miss", "split": "dev"}
+{"id": "language-05", "category": "language", "cached": "write a hello world in TypeScript", "new": "write a hello world in Python", "expected": "miss", "split": "test"}
+{"id": "language-06", "category": "language", "cached": "sort an array in C#", "new": "sort an array in Java", "expected": "miss", "split": "dev"}
+{"id": "language-07", "category": "language", "cached": "how do I make an HTTP request in Go", "new": "how do I make an HTTP request in Rust", "expected": "miss", "split": "test"}
+{"id": "language-08", "category": "language", "cached": "what is a closure in JavaScript", "new": "what is a closure in Python", "expected": "miss", "split": "dev"}
+{"id": "language-09", "category": "language", "cached": "write a unit test in Java", "new": "write a unit test in Scala", "expected": "miss", "split": "test"}
+{"id": "language-10", "category": "language", "cached": "how do I loop over a dictionary in Python", "new": "how do I loop over a map in Go", "expected": "miss", "split": "dev"}
+{"id": "version-00", "category": "version", "cached": "Pydantic v1 validators", "new": "Pydantic v2 validators", "expected": "miss", "split": "dev"}
+{"id": "version-01", "category": "version", "cached": "how to install Python 2 on Ubuntu", "new": "how to install Python 3 on Ubuntu", "expected": "miss", "split": "test"}
+{"id": "version-02", "category": "version", "cached": "React 17 lifecycle methods", "new": "React 18 lifecycle methods", "expected": "miss", "split": "dev"}
+{"id": "version-03", "category": "version", "cached": "what's new in Angular 12", "new": "what's new in Angular 15", "expected": "miss", "split": "test"}
+{"id": "version-04", "category": "version", "cached": "configure webpack 4", "new": "configure webpack 5", "expected": "miss", "split": "dev"}
+{"id": "version-05", "category": "version", "cached": "migrate from Django 2.2", "new": "migrate from Django 4.2", "expected": "miss", "split": "test"}
+{"id": "version-06", "category": "version", "cached": "how to use async in Python 3.6", "new": "how to use async in Python 3.11", "expected": "miss", "split": "dev"}
+{"id": "version-07", "category": "version", "cached": "Kubernetes 1.20 ingress setup", "new": "Kubernetes 1.28 ingress setup", "expected": "miss", "split": "test"}
+{"id": "version-08", "category": "version", "cached": "print in Python 2", "new": "print in Python 3", "expected": "miss", "split": "dev"}
+{"id": "version-09", "category": "version", "cached": "Node 14 module syntax", "new": "Node 20 module syntax", "expected": "miss", "split": "test"}
+{"id": "direction-00", "category": "direction", "cached": "convert CAD to USD", "new": "convert USD to CAD", "expected": "miss", "split": "dev"}
+{"id": "direction-01", "category": "direction", "cached": "flights to Toronto", "new": "flights from Toronto", "expected": "miss", "split": "test"}
+{"id": "direction-02", "category": "direction", "cached": "how do I go from Waterloo to Toronto", "new": "how do I go from Toronto to Waterloo", "expected": "miss", "split": "dev"}
+{"id": "direction-03", "category": "direction", "cached": "convert Celsius to Fahrenheit", "new": "convert Fahrenheit to Celsius", "expected": "miss", "split": "test"}
+{"id": "direction-04", "category": "direction", "cached": "how to import data into Excel", "new": "how to export data from Excel", "expected": "miss", "split": "dev"}
+{"id": "direction-05", "category": "direction", "cached": "encode a string to base64", "new": "decode a string from base64", "expected": "miss", "split": "test"}
+{"id": "direction-06", "category": "direction", "cached": "compress a folder into a zip", "new": "decompress a zip into a folder", "expected": "miss", "split": "dev"}
+{"id": "direction-07", "category": "direction", "cached": "translate English to French", "new": "translate French to English", "expected": "miss", "split": "test"}
+{"id": "direction-08", "category": "direction", "cached": "transfer money from checking to savings", "new": "transfer money from savings to checking", "expected": "miss", "split": "dev"}
+{"id": "direction-09", "category": "direction", "cached": "what to do before the interview", "new": "what to do after the interview", "expected": "miss", "split": "test"}
+{"id": "direction-10", "category": "direction", "cached": "convert miles to kilometers", "new": "convert kilometers to miles", "expected": "miss", "split": "dev"}
+{"id": "entity-00", "category": "entity", "cached": "weather in Toronto", "new": "weather in Waterloo", "expected": "miss", "split": "dev"}
+{"id": "entity-01", "category": "entity", "cached": "population of Canada", "new": "population of Germany", "expected": "miss", "split": "test"}
+{"id": "entity-02", "category": "entity", "cached": "who founded Microsoft", "new": "who founded Apple", "expected": "miss", "split": "dev"}
+{"id": "entity-03", "category": "entity", "cached": "history of Rome", "new": "history of Athens", "expected": "miss", "split": "test"}
+{"id": "entity-04", "category": "entity", "cached": "how do I deploy to AWS", "new": "how do I deploy to Azure", "expected": "miss", "split": "dev"}
+{"id": "entity-05", "category": "entity", "cached": "what is the capital of France", "new": "what is the capital of Spain", "expected": "miss", "split": "test"}
+{"id": "entity-06", "category": "entity", "cached": "how does Netflix recommend movies", "new": "how does Spotify recommend songs", "expected": "miss", "split": "dev"}
+{"id": "entity-07", "category": "entity", "cached": "what did Einstein discover", "new": "what did Newton discover", "expected": "miss", "split": "test"}
+{"id": "entity-08", "category": "entity", "cached": "best restaurants in Vancouver", "new": "best restaurants in Montreal", "expected": "miss", "split": "dev"}
+{"id": "entity-09", "category": "entity", "cached": "how do I set up PostgreSQL", "new": "how do I set up MongoDB", "expected": "miss", "split": "test"}
+{"id": "entity-10", "category": "entity", "cached": "symptoms of the flu", "new": "symptoms of diabetes", "expected": "miss", "split": "dev"}
+{"id": "entity-11", "category": "entity", "cached": "explain the French Revolution", "new": "explain the Russian Revolution", "expected": "miss", "split": "test"}
+{"id": "time_sensitive-00", "category": "time_sensitive", "cached": "what is the latest version of Python", "new": "what's the newest version of Python, latest release", "expected": "miss", "split": "dev"}
+{"id": "time_sensitive-01", "category": "time_sensitive", "cached": "what is the weather today", "new": "what is the weather today", "expected": "miss", "split": "test"}
+{"id": "time_sensitive-02", "category": "time_sensitive", "cached": "current price of bitcoin", "new": "current price of bitcoin", "expected": "miss", "split": "dev"}
+{"id": "time_sensitive-03", "category": "time_sensitive", "cached": "who is the current prime minister of Canada", "new": "who is the current prime minister of Canada?", "expected": "miss", "split": "test"}
+{"id": "time_sensitive-04", "category": "time_sensitive", "cached": "latest news on AI", "new": "latest news about AI", "expected": "miss", "split": "dev"}
+{"id": "time_sensitive-05", "category": "time_sensitive", "cached": "what is the stock price of Apple now", "new": "what is Apple's stock price right now", "expected": "miss", "split": "test"}
+{"id": "time_sensitive-06", "category": "time_sensitive", "cached": "what happened yesterday in the markets", "new": "what happened yesterday in the stock market", "expected": "miss", "split": "dev"}
+{"id": "time_sensitive-07", "category": "time_sensitive", "cached": "what's trending this week", "new": "what is trending this week", "expected": "miss", "split": "test"}
+{"id": "output_format-00", "category": "output_format", "cached": "list the steps to bake bread", "new": "list the steps to bake bread as a table", "expected": "near_hit", "split": "dev"}
+{"id": "output_format-01", "category": "output_format", "cached": "explain the differences between TCP and UDP", "new": "explain the differences between TCP and UDP in a table", "expected": "near_hit", "split": "test"}
+{"id": "output_format-02", "category": "output_format", "cached": "give me the user data for a sample app", "new": "give me the user data for a sample app as JSON", "expected": "near_hit", "split": "dev"}
+{"id": "output_format-03", "category": "output_format", "cached": "summarize the causes of World War 1", "new": "summarize the causes of World War 1 as bullet points", "expected": "near_hit", "split": "test"}
+{"id": "output_format-04", "category": "output_format", "cached": "compare SQL and NoSQL", "new": "compare SQL and NoSQL as a markdown table", "expected": "near_hit", "split": "dev"}
+{"id": "output_format-05", "category": "output_format", "cached": "describe the water cycle in a paragraph", "new": "describe the water cycle as a list", "expected": "near_hit", "split": "test"}
+{"id": "output_format-06", "category": "output_format", "cached": "show example employee records", "new": "show example employee records as CSV", "expected": "near_hit", "split": "dev"}
+{"id": "output_format-07", "category": "output_format", "cached": "list the planets", "new": "list the planets in YAML", "expected": "near_hit", "split": "test"}
+{"id": "sort_order-00", "category": "sort_order", "cached": "sort a list of numbers ascending", "new": "sort a list of numbers descending", "expected": "near_hit", "split": "dev"}
+{"id": "sort_order-01", "category": "sort_order", "cached": "how do I sort a list in Python", "new": "how do I sort a list in Python in descending order", "expected": "near_hit", "split": "test"}
+{"id": "sort_order-02", "category": "sort_order", "cached": "order the users by age ascending in SQL", "new": "order the users by age descending in SQL", "expected": "near_hit", "split": "dev"}
+{"id": "sort_order-03", "category": "sort_order", "cached": "show the leaderboard in ascending order", "new": "show the leaderboard in descending order", "expected": "near_hit", "split": "test"}
+{"id": "sort_order-04", "category": "sort_order", "cached": "sort strings in JavaScript in increasing order", "new": "sort strings in JavaScript in decreasing order", "expected": "near_hit", "split": "dev"}
+{"id": "sort_order-05", "category": "sort_order", "cached": "sort a dictionary by value asc", "new": "sort a dictionary by value desc", "expected": "near_hit", "split": "test"}
+{"id": "sort_order-06", "category": "sort_order", "cached": "sort an array of dates in ascending order", "new": "sort an array of dates in descending order", "expected": "near_hit", "split": "dev"}
+{"id": "verbosity-00", "category": "verbosity", "cached": "explain recursion", "new": "explain recursion briefly", "expected": "near_hit", "split": "dev"}
+{"id": "verbosity-01", "category": "verbosity", "cached": "what is a hash table", "new": "what is a hash table, in detail", "expected": "near_hit", "split": "test"}
+{"id": "verbosity-02", "category": "verbosity", "cached": "how does HTTPS work", "new": "how does HTTPS work step by step", "expected": "near_hit", "split": "dev"}
+{"id": "verbosity-03", "category": "verbosity", "cached": "explain machine learning", "new": "explain machine learning like I'm five", "expected": "near_hit", "split": "test"}
+{"id": "verbosity-04", "category": "verbosity", "cached": "what is Docker", "new": "what is Docker, keep it concise", "expected": "near_hit", "split": "dev"}
+{"id": "verbosity-05", "category": "verbosity", "cached": "describe how a compiler works", "new": "describe how a compiler works in a short answer", "expected": "near_hit", "split": "test"}
+{"id": "verbosity-06", "category": "verbosity", "cached": "explain big O notation", "new": "explain big O notation, tl;dr", "expected": "near_hit", "split": "dev"}
+{"id": "verbosity-07", "category": "verbosity", "cached": "how does a CPU cache work", "new": "how does a CPU cache work in detail", "expected": "near_hit", "split": "test"}
+{"id": "constraint-00", "category": "constraint", "cached": "write a function to merge two lists", "new": "write a function to merge two lists with type hints", "expected": "near_hit", "split": "dev"}
+{"id": "constraint-01", "category": "constraint", "cached": "write a function to parse a date", "new": "write a function to parse a date with error handling", "expected": "near_hit", "split": "test"}
+{"id": "constraint-02", "category": "constraint", "cached": "write a python class for a stack", "new": "write a python class for a stack with docstrings", "expected": "near_hit", "split": "dev"}
+{"id": "constraint-03", "category": "constraint", "cached": "write a function to check for primes", "new": "write a function to check for primes with comments", "expected": "near_hit", "split": "test"}
+{"id": "constraint-04", "category": "constraint", "cached": "write a function to flatten a list", "new": "write a function to flatten a list with tests", "expected": "near_hit", "split": "dev"}
+{"id": "constraint-05", "category": "constraint", "cached": "implement binary search", "new": "implement binary search including examples", "expected": "near_hit", "split": "test"}
+{"id": "constraint-06", "category": "constraint", "cached": "write a script to rename files", "new": "write a script to rename files using error handling", "expected": "near_hit", "split": "dev"}
+{"id": "paraphrase-00", "category": "paraphrase", "cached": "how do I reset my password", "new": "how can I reset my password", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-01", "category": "paraphrase", "cached": "forgot my password, help", "new": "I forgot my password, how do I get back in", "expected": "hit", "split": "test"}
+{"id": "paraphrase-02", "category": "paraphrase", "cached": "what is the capital of France", "new": "which city is the capital of France", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-03", "category": "paraphrase", "cached": "how do I sort a list in Python", "new": "what is the way to sort a list in Python", "expected": "hit", "split": "test"}
+{"id": "paraphrase-04", "category": "paraphrase", "cached": "explain what a REST API is", "new": "what is a REST API", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-05", "category": "paraphrase", "cached": "how to change my email address", "new": "how do I update my email address", "expected": "hit", "split": "test"}
+{"id": "paraphrase-06", "category": "paraphrase", "cached": "what does git rebase do", "new": "can you explain what git rebase does", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-07", "category": "paraphrase", "cached": "how do I delete a branch in git", "new": "how can I remove a git branch", "expected": "hit", "split": "test"}
+{"id": "paraphrase-08", "category": "paraphrase", "cached": "what is the difference between a list and a tuple", "new": "how do lists and tuples differ", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-09", "category": "paraphrase", "cached": "how do I cook pasta", "new": "how should I cook pasta", "expected": "hit", "split": "test"}
+{"id": "paraphrase-10", "category": "paraphrase", "cached": "tips for a job interview", "new": "any tips for a job interview", "expected": "hit", "split": "dev"}
+{"id": "paraphrase-11", "category": "paraphrase", "cached": "how do I center a div in CSS", "new": "how can I center a div using CSS", "expected": "hit", "split": "test"}
