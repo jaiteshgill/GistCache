@@ -588,6 +588,8 @@ gistcache/
 │   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies
 │   ├── volatility.py        # validates the volatility check against a real model
 │   ├── spend.py             # spend tracking and cap
+│   ├── pin.py               # (re)generate pinned.json, the regression pins
+│   ├── pinned.json          # pinned rule differences and tiers for every eval pair
 │   ├── seeds.py             # 40 hand-written seed prompts
 │   ├── build_hard_set.py    # -> hard_set.jsonl   (tuned on)
 │   ├── build_held_out.py    # -> held_out.jsonl   (tuned on)
@@ -609,8 +611,10 @@ pytest
 
 - **Rule and policy tests** cover each difference check (including regressions found on real LLM-written text) and the tier decision policy.
 - **Pipeline tests** run the full request lifecycle against mock providers: tiers, scope isolation, bypass paths, multi-turn context, the contradiction guard, the volatility check and decision logging.
+- **Proxy integration tests** (`tests/test_server.py`) drive the FastAPI app with a test client and mock providers: the `X-GistCache-*` response headers, hit / near-hit / fallback / bypass behaviour, scope isolation, streaming, `/v1/models`, and the 502 returned when the upstream provider fails.
+- **Pinned regression tests** (`tests/test_pinned.py`) record the verifier's decision on all 245 labelled eval pairs. The rule pins are fast and run on every `pytest`. The full-pipeline tier pins load the real models (about 10 seconds) and run with `GISTCACHE_SLOW=1 pytest`. If a behaviour change is intended, run `python -m eval.pin`, review the diff of `eval/pinned.json`, and commit it with the change.
 - **Harness tests** cover the spend cap, stream ordering, variant parsing and judge verdict parsing.
-- **Not yet covered:** the FastAPI server routes (streaming and headers) and the CLI are untested, and there are no pinned regression tests over the eval sets.
+- **Not yet covered:** the CLI, the real provider classes (they need network calls) and CI.
 
 ## Design decisions
 

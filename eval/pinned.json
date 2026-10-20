@@ -1,0 +1,899 @@
+{
+ "rules": {
+  "fresh:antonym-00": [],
+  "fresh:antonym-01": [],
+  "fresh:antonym-02": [],
+  "fresh:antonym-03": [],
+  "fresh:antonym-04": [
+   "number|critical"
+  ],
+  "fresh:antonym-05": [
+   "negation|critical"
+  ],
+  "fresh:antonym-06": [
+   "negation|critical"
+  ],
+  "fresh:antonym-07": [
+   "negation|critical"
+  ],
+  "fresh:antonym-08": [],
+  "fresh:antonym-09": [
+   "direction|critical"
+  ],
+  "fresh:entity-00": [],
+  "fresh:entity-01": [],
+  "fresh:entity-02": [],
+  "fresh:entity-03": [],
+  "fresh:entity-04": [],
+  "fresh:entity-05": [],
+  "fresh:entity-06": [],
+  "fresh:entity-07": [],
+  "fresh:entity-08": [],
+  "fresh:language_version-00": [
+   "content_added|patchable",
+   "language|critical"
+  ],
+  "fresh:language_version-01": [
+   "number|critical"
+  ],
+  "fresh:language_version-02": [
+   "number|critical"
+  ],
+  "fresh:language_version-03": [
+   "language|critical"
+  ],
+  "fresh:language_version-04": [
+   "language|critical"
+  ],
+  "fresh:language_version-05": [
+   "content_added|patchable",
+   "language|critical"
+  ],
+  "fresh:number-00": [
+   "number|critical"
+  ],
+  "fresh:number-01": [
+   "number|critical"
+  ],
+  "fresh:number-02": [
+   "number|critical"
+  ],
+  "fresh:number-03": [
+   "number|critical"
+  ],
+  "fresh:number-04": [
+   "number|critical"
+  ],
+  "fresh:number-05": [
+   "number|critical"
+  ],
+  "fresh:number-06": [
+   "number|critical"
+  ],
+  "fresh:number-07": [],
+  "fresh:paraphrase-00": [],
+  "fresh:paraphrase-01": [],
+  "fresh:paraphrase-02": [],
+  "fresh:paraphrase-03": [],
+  "fresh:paraphrase-04": [
+   "content_added|patchable"
+  ],
+  "fresh:paraphrase-05": [
+   "content_added|patchable"
+  ],
+  "fresh:paraphrase-06": [],
+  "fresh:paraphrase-07": [
+   "content_added|patchable"
+  ],
+  "fresh:paraphrase-08": [],
+  "fresh:paraphrase-09": [],
+  "fresh:paraphrase-10": [],
+  "fresh:paraphrase-11": [
+   "content_added|patchable"
+  ],
+  "fresh:paraphrase-12": [],
+  "fresh:paraphrase-13": [],
+  "fresh:paraphrase-14": [],
+  "fresh:patchable-00": [
+   "verbosity|patchable"
+  ],
+  "fresh:patchable-01": [
+   "verbosity|patchable"
+  ],
+  "fresh:patchable-02": [
+   "constraint|patchable"
+  ],
+  "fresh:patchable-03": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "fresh:patchable-04": [
+   "verbosity|patchable"
+  ],
+  "fresh:patchable-05": [
+   "sort_order|patchable"
+  ],
+  "fresh:patchable-06": [
+   "constraint|patchable"
+  ],
+  "fresh:patchable-07": [
+   "content_added|patchable",
+   "number|critical"
+  ],
+  "fresh:patchable-08": [
+   "content_added|patchable"
+  ],
+  "fresh:patchable-09": [
+   "content_added|patchable",
+   "verbosity|patchable"
+  ],
+  "fresh:role-00": [
+   "direction|critical"
+  ],
+  "fresh:role-01": [
+   "direction|critical"
+  ],
+  "fresh:role-02": [
+   "direction|critical",
+   "negation|critical"
+  ],
+  "fresh:role-03": [
+   "direction|critical"
+  ],
+  "fresh:role-04": [],
+  "fresh:volatile-00": [],
+  "fresh:volatile-01": [],
+  "fresh:volatile-02": [],
+  "fresh:volatile-03": [],
+  "fresh:volatile-04": [],
+  "fresh:volatile-05": [],
+  "hard_set:constraint-00": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-01": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-02": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-03": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-04": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-05": [
+   "constraint|patchable"
+  ],
+  "hard_set:constraint-06": [
+   "constraint|patchable"
+  ],
+  "hard_set:direction-00": [
+   "direction|critical"
+  ],
+  "hard_set:direction-01": [
+   "direction|critical"
+  ],
+  "hard_set:direction-02": [
+   "direction|critical"
+  ],
+  "hard_set:direction-03": [
+   "direction|critical"
+  ],
+  "hard_set:direction-04": [
+   "direction|critical"
+  ],
+  "hard_set:direction-05": [
+   "direction|critical"
+  ],
+  "hard_set:direction-06": [
+   "direction|critical",
+   "negation|critical"
+  ],
+  "hard_set:direction-07": [
+   "direction|critical"
+  ],
+  "hard_set:direction-08": [
+   "direction|critical"
+  ],
+  "hard_set:direction-09": [],
+  "hard_set:direction-10": [
+   "direction|critical"
+  ],
+  "hard_set:entity-00": [
+   "entity|critical",
+   "time_sensitive|critical"
+  ],
+  "hard_set:entity-01": [
+   "entity|critical"
+  ],
+  "hard_set:entity-02": [
+   "entity|critical"
+  ],
+  "hard_set:entity-03": [
+   "entity|critical"
+  ],
+  "hard_set:entity-04": [
+   "content_added|patchable",
+   "entity|critical"
+  ],
+  "hard_set:entity-05": [
+   "entity|critical"
+  ],
+  "hard_set:entity-06": [
+   "entity|critical"
+  ],
+  "hard_set:entity-07": [
+   "entity|critical"
+  ],
+  "hard_set:entity-08": [
+   "entity|critical"
+  ],
+  "hard_set:entity-09": [
+   "entity|critical"
+  ],
+  "hard_set:entity-10": [],
+  "hard_set:entity-11": [
+   "entity|critical"
+  ],
+  "hard_set:language-00": [
+   "entity|critical",
+   "language|critical"
+  ],
+  "hard_set:language-01": [
+   "language|critical"
+  ],
+  "hard_set:language-02": [
+   "language|critical"
+  ],
+  "hard_set:language-03": [
+   "language|critical"
+  ],
+  "hard_set:language-04": [
+   "language|critical"
+  ],
+  "hard_set:language-05": [
+   "language|critical"
+  ],
+  "hard_set:language-06": [
+   "language|critical"
+  ],
+  "hard_set:language-07": [
+   "entity|critical",
+   "language|critical"
+  ],
+  "hard_set:language-08": [
+   "language|critical"
+  ],
+  "hard_set:language-09": [
+   "language|critical"
+  ],
+  "hard_set:language-10": [
+   "entity|critical",
+   "language|critical"
+  ],
+  "hard_set:negation-00": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-01": [
+   "negation|critical"
+  ],
+  "hard_set:negation-02": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-03": [],
+  "hard_set:negation-04": [
+   "negation|critical"
+  ],
+  "hard_set:negation-05": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-06": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-07": [
+   "constraint|patchable",
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-08": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-09": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-10": [
+   "content_added|patchable",
+   "negation|critical"
+  ],
+  "hard_set:negation-11": [],
+  "hard_set:number-00": [
+   "number|critical"
+  ],
+  "hard_set:number-01": [
+   "number|critical"
+  ],
+  "hard_set:number-02": [
+   "number|critical"
+  ],
+  "hard_set:number-03": [
+   "number|critical"
+  ],
+  "hard_set:number-04": [
+   "number|critical"
+  ],
+  "hard_set:number-05": [
+   "number|critical"
+  ],
+  "hard_set:number-06": [
+   "number|critical"
+  ],
+  "hard_set:number-07": [
+   "number|critical"
+  ],
+  "hard_set:number-08": [
+   "number|critical"
+  ],
+  "hard_set:number-09": [
+   "number|critical"
+  ],
+  "hard_set:number-10": [
+   "number|critical"
+  ],
+  "hard_set:number-11": [
+   "number|critical"
+  ],
+  "hard_set:output_format-00": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-01": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-02": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-03": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-04": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-05": [
+   "content_removed|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-06": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:output_format-07": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "hard_set:paraphrase-00": [],
+  "hard_set:paraphrase-01": [
+   "content_added|patchable"
+  ],
+  "hard_set:paraphrase-02": [
+   "content_added|patchable"
+  ],
+  "hard_set:paraphrase-03": [],
+  "hard_set:paraphrase-04": [],
+  "hard_set:paraphrase-05": [],
+  "hard_set:paraphrase-06": [],
+  "hard_set:paraphrase-07": [],
+  "hard_set:paraphrase-08": [],
+  "hard_set:paraphrase-09": [],
+  "hard_set:paraphrase-10": [],
+  "hard_set:paraphrase-11": [
+   "content_added|patchable"
+  ],
+  "hard_set:sort_order-00": [
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-01": [
+   "content_added|patchable",
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-02": [
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-03": [
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-04": [
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-05": [
+   "sort_order|patchable"
+  ],
+  "hard_set:sort_order-06": [
+   "sort_order|patchable"
+  ],
+  "hard_set:time_sensitive-00": [
+   "content_added|patchable",
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-01": [
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-02": [
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-03": [
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-04": [
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-05": [
+   "content_added|patchable",
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-06": [
+   "content_added|patchable",
+   "time_sensitive|critical"
+  ],
+  "hard_set:time_sensitive-07": [
+   "time_sensitive|critical"
+  ],
+  "hard_set:verbosity-00": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-01": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-02": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-03": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-04": [
+   "content_added|patchable",
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-05": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-06": [
+   "verbosity|patchable"
+  ],
+  "hard_set:verbosity-07": [
+   "verbosity|patchable"
+  ],
+  "hard_set:version-00": [
+   "number|critical"
+  ],
+  "hard_set:version-01": [
+   "number|critical"
+  ],
+  "hard_set:version-02": [
+   "number|critical"
+  ],
+  "hard_set:version-03": [
+   "number|critical"
+  ],
+  "hard_set:version-04": [
+   "number|critical"
+  ],
+  "hard_set:version-05": [
+   "number|critical"
+  ],
+  "hard_set:version-06": [
+   "number|critical"
+  ],
+  "hard_set:version-07": [
+   "number|critical"
+  ],
+  "hard_set:version-08": [
+   "number|critical"
+  ],
+  "hard_set:version-09": [
+   "number|critical"
+  ],
+  "held_out:antonym-00": [
+   "negation|critical"
+  ],
+  "held_out:antonym-01": [
+   "negation|critical"
+  ],
+  "held_out:antonym-02": [
+   "negation|critical"
+  ],
+  "held_out:antonym-03": [
+   "negation|critical"
+  ],
+  "held_out:antonym-04": [
+   "negation|critical"
+  ],
+  "held_out:antonym-05": [
+   "negation|critical"
+  ],
+  "held_out:antonym-06": [
+   "negation|critical"
+  ],
+  "held_out:antonym-07": [
+   "content_removed|patchable",
+   "negation|critical"
+  ],
+  "held_out:entity_lowercase-00": [
+   "time_sensitive|critical"
+  ],
+  "held_out:entity_lowercase-01": [],
+  "held_out:entity_lowercase-02": [],
+  "held_out:entity_lowercase-03": [],
+  "held_out:entity_lowercase-04": [],
+  "held_out:entity_lowercase-05": [],
+  "held_out:entity_lowercase-06": [],
+  "held_out:entity_lowercase-07": [],
+  "held_out:implicit_time-00": [
+   "time_sensitive|critical"
+  ],
+  "held_out:implicit_time-01": [
+   "time_sensitive|critical"
+  ],
+  "held_out:implicit_time-02": [
+   "time_sensitive|critical"
+  ],
+  "held_out:implicit_time-03": [
+   "time_sensitive|critical"
+  ],
+  "held_out:language_edge-00": [
+   "content_added|patchable",
+   "language|critical"
+  ],
+  "held_out:language_edge-01": [
+   "number|critical"
+  ],
+  "held_out:language_edge-02": [
+   "language|critical",
+   "number|critical"
+  ],
+  "held_out:language_edge-03": [
+   "language|critical"
+  ],
+  "held_out:language_edge-04": [
+   "number|critical"
+  ],
+  "held_out:number_variant-00": [
+   "number|critical"
+  ],
+  "held_out:number_variant-01": [
+   "content_added|patchable",
+   "number|critical"
+  ],
+  "held_out:number_variant-02": [
+   "number|critical"
+  ],
+  "held_out:number_variant-03": [
+   "number|critical"
+  ],
+  "held_out:number_variant-04": [
+   "number|critical"
+  ],
+  "held_out:number_variant-05": [
+   "content_added|patchable",
+   "number|critical"
+  ],
+  "held_out:number_variant-06": [
+   "number|critical"
+  ],
+  "held_out:paraphrase_hard-00": [],
+  "held_out:paraphrase_hard-01": [],
+  "held_out:paraphrase_hard-02": [],
+  "held_out:paraphrase_hard-03": [],
+  "held_out:paraphrase_hard-04": [],
+  "held_out:paraphrase_hard-05": [
+   "content_added|patchable"
+  ],
+  "held_out:paraphrase_hard-06": [
+   "content_added|patchable"
+  ],
+  "held_out:paraphrase_hard-07": [],
+  "held_out:paraphrase_hard-08": [],
+  "held_out:paraphrase_hard-09": [],
+  "held_out:paraphrase_hard-10": [],
+  "held_out:paraphrase_hard-11": [],
+  "held_out:paraphrase_hard-12": [],
+  "held_out:patchable_mixed-00": [
+   "sort_order|patchable"
+  ],
+  "held_out:patchable_mixed-01": [
+   "output_format|patchable",
+   "verbosity|patchable"
+  ],
+  "held_out:patchable_mixed-02": [
+   "constraint|patchable"
+  ],
+  "held_out:patchable_mixed-03": [
+   "constraint|patchable"
+  ],
+  "held_out:patchable_mixed-04": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "held_out:patchable_mixed-05": [
+   "verbosity|patchable"
+  ],
+  "held_out:patchable_mixed-06": [
+   "content_added|patchable",
+   "output_format|patchable"
+  ],
+  "held_out:patchable_mixed-07": [
+   "verbosity|patchable"
+  ],
+  "held_out:role_swap-00": [
+   "direction|critical",
+   "time_sensitive|critical"
+  ],
+  "held_out:role_swap-01": [
+   "direction|critical"
+  ],
+  "held_out:role_swap-02": [
+   "direction|critical"
+  ],
+  "held_out:role_swap-03": [],
+  "held_out:role_swap-04": [
+   "direction|critical"
+  ]
+ },
+ "tiers": {
+  "fresh:antonym-00": "miss",
+  "fresh:antonym-01": "miss",
+  "fresh:antonym-02": "miss",
+  "fresh:antonym-03": "miss",
+  "fresh:antonym-04": "miss",
+  "fresh:antonym-05": "miss",
+  "fresh:antonym-06": "miss",
+  "fresh:antonym-07": "miss",
+  "fresh:antonym-08": "miss",
+  "fresh:antonym-09": "miss",
+  "fresh:entity-00": "miss",
+  "fresh:entity-01": "miss",
+  "fresh:entity-02": "miss",
+  "fresh:entity-03": "miss",
+  "fresh:entity-04": "miss",
+  "fresh:entity-05": "miss",
+  "fresh:entity-06": "miss",
+  "fresh:entity-07": "miss",
+  "fresh:entity-08": "miss",
+  "fresh:language_version-00": "miss",
+  "fresh:language_version-01": "miss",
+  "fresh:language_version-02": "miss",
+  "fresh:language_version-03": "miss",
+  "fresh:language_version-04": "miss",
+  "fresh:language_version-05": "miss",
+  "fresh:number-00": "miss",
+  "fresh:number-01": "miss",
+  "fresh:number-02": "miss",
+  "fresh:number-03": "miss",
+  "fresh:number-04": "miss",
+  "fresh:number-05": "miss",
+  "fresh:number-06": "miss",
+  "fresh:number-07": "miss",
+  "fresh:paraphrase-00": "hit",
+  "fresh:paraphrase-01": "miss",
+  "fresh:paraphrase-02": "hit",
+  "fresh:paraphrase-03": "hit",
+  "fresh:paraphrase-04": "near_hit",
+  "fresh:paraphrase-05": "near_hit",
+  "fresh:paraphrase-06": "hit",
+  "fresh:paraphrase-07": "near_hit",
+  "fresh:paraphrase-08": "hit",
+  "fresh:paraphrase-09": "hit",
+  "fresh:paraphrase-10": "miss",
+  "fresh:paraphrase-11": "near_hit",
+  "fresh:paraphrase-12": "hit",
+  "fresh:paraphrase-13": "miss",
+  "fresh:paraphrase-14": "hit",
+  "fresh:patchable-00": "near_hit",
+  "fresh:patchable-01": "near_hit",
+  "fresh:patchable-02": "near_hit",
+  "fresh:patchable-03": "near_hit",
+  "fresh:patchable-04": "near_hit",
+  "fresh:patchable-05": "near_hit",
+  "fresh:patchable-06": "near_hit",
+  "fresh:patchable-07": "miss",
+  "fresh:patchable-08": "near_hit",
+  "fresh:patchable-09": "near_hit",
+  "fresh:role-00": "miss",
+  "fresh:role-01": "miss",
+  "fresh:role-02": "miss",
+  "fresh:role-03": "miss",
+  "fresh:role-04": "miss",
+  "fresh:volatile-00": "hit",
+  "fresh:volatile-01": "hit",
+  "fresh:volatile-02": "hit",
+  "fresh:volatile-03": "hit",
+  "fresh:volatile-04": "hit",
+  "fresh:volatile-05": "hit",
+  "hard_set:constraint-00": "near_hit",
+  "hard_set:constraint-01": "near_hit",
+  "hard_set:constraint-02": "near_hit",
+  "hard_set:constraint-03": "near_hit",
+  "hard_set:constraint-04": "near_hit",
+  "hard_set:constraint-05": "near_hit",
+  "hard_set:constraint-06": "near_hit",
+  "hard_set:direction-00": "miss",
+  "hard_set:direction-01": "miss",
+  "hard_set:direction-02": "miss",
+  "hard_set:direction-03": "miss",
+  "hard_set:direction-04": "miss",
+  "hard_set:direction-05": "miss",
+  "hard_set:direction-06": "miss",
+  "hard_set:direction-07": "miss",
+  "hard_set:direction-08": "miss",
+  "hard_set:direction-09": "miss",
+  "hard_set:direction-10": "miss",
+  "hard_set:entity-00": "miss",
+  "hard_set:entity-01": "miss",
+  "hard_set:entity-02": "miss",
+  "hard_set:entity-03": "miss",
+  "hard_set:entity-04": "miss",
+  "hard_set:entity-05": "miss",
+  "hard_set:entity-06": "miss",
+  "hard_set:entity-07": "miss",
+  "hard_set:entity-08": "miss",
+  "hard_set:entity-09": "miss",
+  "hard_set:entity-10": "miss",
+  "hard_set:entity-11": "miss",
+  "hard_set:language-00": "miss",
+  "hard_set:language-01": "miss",
+  "hard_set:language-02": "miss",
+  "hard_set:language-03": "miss",
+  "hard_set:language-04": "miss",
+  "hard_set:language-05": "miss",
+  "hard_set:language-06": "miss",
+  "hard_set:language-07": "miss",
+  "hard_set:language-08": "miss",
+  "hard_set:language-09": "miss",
+  "hard_set:language-10": "miss",
+  "hard_set:negation-00": "miss",
+  "hard_set:negation-01": "miss",
+  "hard_set:negation-02": "miss",
+  "hard_set:negation-03": "miss",
+  "hard_set:negation-04": "miss",
+  "hard_set:negation-05": "miss",
+  "hard_set:negation-06": "miss",
+  "hard_set:negation-07": "miss",
+  "hard_set:negation-08": "miss",
+  "hard_set:negation-09": "miss",
+  "hard_set:negation-10": "miss",
+  "hard_set:negation-11": "miss",
+  "hard_set:number-00": "miss",
+  "hard_set:number-01": "miss",
+  "hard_set:number-02": "miss",
+  "hard_set:number-03": "miss",
+  "hard_set:number-04": "miss",
+  "hard_set:number-05": "miss",
+  "hard_set:number-06": "miss",
+  "hard_set:number-07": "miss",
+  "hard_set:number-08": "miss",
+  "hard_set:number-09": "miss",
+  "hard_set:number-10": "miss",
+  "hard_set:number-11": "miss",
+  "hard_set:output_format-00": "near_hit",
+  "hard_set:output_format-01": "near_hit",
+  "hard_set:output_format-02": "near_hit",
+  "hard_set:output_format-03": "near_hit",
+  "hard_set:output_format-04": "near_hit",
+  "hard_set:output_format-05": "near_hit",
+  "hard_set:output_format-06": "near_hit",
+  "hard_set:output_format-07": "near_hit",
+  "hard_set:paraphrase-00": "hit",
+  "hard_set:paraphrase-01": "near_hit",
+  "hard_set:paraphrase-02": "near_hit",
+  "hard_set:paraphrase-03": "hit",
+  "hard_set:paraphrase-04": "hit",
+  "hard_set:paraphrase-05": "miss",
+  "hard_set:paraphrase-06": "hit",
+  "hard_set:paraphrase-07": "miss",
+  "hard_set:paraphrase-08": "hit",
+  "hard_set:paraphrase-09": "hit",
+  "hard_set:paraphrase-10": "hit",
+  "hard_set:paraphrase-11": "near_hit",
+  "hard_set:sort_order-00": "near_hit",
+  "hard_set:sort_order-01": "near_hit",
+  "hard_set:sort_order-02": "near_hit",
+  "hard_set:sort_order-03": "near_hit",
+  "hard_set:sort_order-04": "near_hit",
+  "hard_set:sort_order-05": "near_hit",
+  "hard_set:sort_order-06": "near_hit",
+  "hard_set:time_sensitive-00": "miss",
+  "hard_set:time_sensitive-01": "miss",
+  "hard_set:time_sensitive-02": "miss",
+  "hard_set:time_sensitive-03": "miss",
+  "hard_set:time_sensitive-04": "miss",
+  "hard_set:time_sensitive-05": "miss",
+  "hard_set:time_sensitive-06": "miss",
+  "hard_set:time_sensitive-07": "miss",
+  "hard_set:verbosity-00": "near_hit",
+  "hard_set:verbosity-01": "near_hit",
+  "hard_set:verbosity-02": "near_hit",
+  "hard_set:verbosity-03": "near_hit",
+  "hard_set:verbosity-04": "near_hit",
+  "hard_set:verbosity-05": "near_hit",
+  "hard_set:verbosity-06": "near_hit",
+  "hard_set:verbosity-07": "near_hit",
+  "hard_set:version-00": "miss",
+  "hard_set:version-01": "miss",
+  "hard_set:version-02": "miss",
+  "hard_set:version-03": "miss",
+  "hard_set:version-04": "miss",
+  "hard_set:version-05": "miss",
+  "hard_set:version-06": "miss",
+  "hard_set:version-07": "miss",
+  "hard_set:version-08": "miss",
+  "hard_set:version-09": "miss",
+  "held_out:antonym-00": "miss",
+  "held_out:antonym-01": "miss",
+  "held_out:antonym-02": "miss",
+  "held_out:antonym-03": "miss",
+  "held_out:antonym-04": "miss",
+  "held_out:antonym-05": "miss",
+  "held_out:antonym-06": "miss",
+  "held_out:antonym-07": "miss",
+  "held_out:entity_lowercase-00": "miss",
+  "held_out:entity_lowercase-01": "miss",
+  "held_out:entity_lowercase-02": "miss",
+  "held_out:entity_lowercase-03": "miss",
+  "held_out:entity_lowercase-04": "miss",
+  "held_out:entity_lowercase-05": "miss",
+  "held_out:entity_lowercase-06": "miss",
+  "held_out:entity_lowercase-07": "miss",
+  "held_out:implicit_time-00": "miss",
+  "held_out:implicit_time-01": "miss",
+  "held_out:implicit_time-02": "miss",
+  "held_out:implicit_time-03": "miss",
+  "held_out:language_edge-00": "miss",
+  "held_out:language_edge-01": "miss",
+  "held_out:language_edge-02": "miss",
+  "held_out:language_edge-03": "miss",
+  "held_out:language_edge-04": "miss",
+  "held_out:number_variant-00": "miss",
+  "held_out:number_variant-01": "miss",
+  "held_out:number_variant-02": "miss",
+  "held_out:number_variant-03": "miss",
+  "held_out:number_variant-04": "miss",
+  "held_out:number_variant-05": "miss",
+  "held_out:number_variant-06": "miss",
+  "held_out:paraphrase_hard-00": "hit",
+  "held_out:paraphrase_hard-01": "miss",
+  "held_out:paraphrase_hard-02": "hit",
+  "held_out:paraphrase_hard-03": "hit",
+  "held_out:paraphrase_hard-04": "miss",
+  "held_out:paraphrase_hard-05": "near_hit",
+  "held_out:paraphrase_hard-06": "near_hit",
+  "held_out:paraphrase_hard-07": "hit",
+  "held_out:paraphrase_hard-08": "hit",
+  "held_out:paraphrase_hard-09": "hit",
+  "held_out:paraphrase_hard-10": "hit",
+  "held_out:paraphrase_hard-11": "hit",
+  "held_out:paraphrase_hard-12": "hit",
+  "held_out:patchable_mixed-00": "near_hit",
+  "held_out:patchable_mixed-01": "near_hit",
+  "held_out:patchable_mixed-02": "near_hit",
+  "held_out:patchable_mixed-03": "near_hit",
+  "held_out:patchable_mixed-04": "near_hit",
+  "held_out:patchable_mixed-05": "near_hit",
+  "held_out:patchable_mixed-06": "near_hit",
+  "held_out:patchable_mixed-07": "near_hit",
+  "held_out:role_swap-00": "miss",
+  "held_out:role_swap-01": "miss",
+  "held_out:role_swap-02": "miss",
+  "held_out:role_swap-03": "miss",
+  "held_out:role_swap-04": "miss"
+ }
+}
