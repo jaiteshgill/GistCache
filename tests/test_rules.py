@@ -100,3 +100,32 @@ def test_content_added_blocks_a_plain_hit():
 def test_volatile_phrases():
     for q in ("weather in toronto", "who is the ceo of apple", "what time is it", "is the store open"):
         assert "time_sensitive" in kinds(q, q)
+
+
+# --- regressions found by the pilot on real LLM-written text ---------------------------------
+def test_second_sentence_start_is_not_an_entity():
+    assert "entity" not in kinds("How do I improve my credit score?", "How do I improve my credit score? Answer briefly, in a bulleted list.")
+    assert "entity" not in kinds("How do I write a cover letter?", "How do I write a cover letter? Please answer briefly.")
+
+
+def test_possessive_does_not_drop_a_language():
+    assert "language" not in kinds("How does garbage collection work in Java?", "Can you explain how Java's garbage collector operates?")
+
+
+def test_non_and_no_are_the_same_negation():
+    assert "negation" not in kinds("explain an API to a non-technical person", "explain an API to someone with no technical background")
+
+
+def test_weather_as_a_topic_is_not_time_sensitive():
+    assert "time_sensitive" not in kinds("difference between weather and climate", "how do weather and climate differ")
+    assert "time_sensitive" in kinds("weather in toronto", "weather in toronto")
+
+
+def test_to_from_in_different_phrasings_is_not_a_direction_swap():
+    assert "direction" not in kinds("How do I remove duplicates from a list in JavaScript?",
+                                    "What is the way to get rid of repeated elements in an array in JavaScript?")
+    assert "direction" in kinds("flights to Toronto", "flights from Toronto")
+
+
+def test_type_name_capitalization_is_not_a_new_entity():
+    assert "entity" not in kinds("How do I convert a string to an integer in Java?", "What is the way to turn a String into an int in Java?")

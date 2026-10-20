@@ -7,7 +7,7 @@ PATCHABLE = "patchable"
 
 # --- negation ---------------------------------------------------------------------------------
 _NEG = re.compile(
-    r"\b(?:not|no(?!\.)|never|without|cannot|nothing|none|neither|nor"
+    r"\b(?:not|no(?!\.)|never|without|cannot|nothing|none|neither|nor|non(?=-)"
     r"|\w+n't|wont|dont|doesnt|didnt|isnt|arent|cant|shouldnt|wouldnt|couldnt|wasnt|werent|hasnt|havent)\b")
 _NEG_PREFIXES = ("un", "il", "im", "in", "ir", "dis", "non", "de", "anti")
 
@@ -47,7 +47,7 @@ _ORDINAL = re.compile(r"\b(\d+)(?:st|nd|rd|th)\b")
 _TIME = re.compile(
     r"\b(?:latest|today|current|currently|now|price|prices|recent|news|tonight|tomorrow|yesterday"
     r"|this (?:week|month|year|morning|evening)|right now|at the moment|nowadays|these days|as of"
-    r"|weather|forecast|exchange rate|traffic|trending|breaking|standings|scoreboard|who won"
+    r"|(?:the )?weather (?:in|at|for|near|today|tomorrow|tonight|this|like|forecast|right|outside)|how(?:'s| is) the weather|forecast|exchange rate|traffic|trending|breaking|standings|scoreboard|who won"
     r"|stock (?:price|prices|market|quote)|share price|live score|latest score|what time is it"
     r"|who is (?:the )?(?:current )?(?:ceo|president|prime minister|mayor|governor|leader|owner|coach"
     r"|manager|chairman|head)(?: of)?"
@@ -96,7 +96,7 @@ class Difference:
 
 
 def _toks(t: str) -> list[str]:
-    return re.findall(r"[a-z0-9+#']+", t.lower())
+    return [w[:-2] if w.endswith("'s") and len(w) > 3 else w for w in re.findall(r"[a-z0-9+#']+", t.lower())]
 
 
 def _words(t: str) -> set[str]:
@@ -128,11 +128,8 @@ def _core(t: str) -> str:
 
 
 def _neg_set(t: str) -> set[str]:
-    out = set()
-    for m in _NEG.finditer(t.lower().replace("’", "'")):
-        w = m.group(0)
-        out.add(w if w in ("no", "never", "without", "nothing", "none", "neither", "nor") else "not")
-    return out
+    # Presence only: "no X", "not X", "non-X" and "without X" all negate; which word is used is style.
+    return {"neg"} if _NEG.search(t.lower().replace("’", "'")) else set()
 
 
 def _prefix_negation(wa: set[str], wb: set[str]) -> str | None:
@@ -171,11 +168,14 @@ def _langs(t: str) -> set[str]:
 
 
 def _caps(t: str) -> set[str]:
-    # Capitalized tokens not at sentence start, as a cheap entity proxy.
-    toks = re.findall(r"\S+", t)
-    caps = {x.strip(".,?!\"'").lower() for i, x in enumerate(toks)
-            if i > 0 and x[:1].isupper() and len(x) > 1 and "'" not in x}  # skip contractions like I'm
-    return caps - set(_FORMATS)
+    # Capitalized tokens that do not start a sentence, as a cheap entity proxy.
+    out, start = set(), True
+    for x in re.findall(r"\S+", t):
+        w = x.strip(".,?!:;\"'()").lower()
+        if not start and x[:1].isupper() and len(w) > 1 and "'" not in x:
+            out.add(w)
+        start = x[-1:] in ".?!:"
+    return out - set(_FORMATS)
 
 
 def _numbers(t: str) -> list[float]:
@@ -219,8 +219,11 @@ def extract_differences(a: str, b: str, strict_content: bool = True) -> list[Dif
     elif (an := _antonym(wa, wb)):
         diffs.append(Difference("negation", CRITICAL, f"antonym {an}"))
 
+    cwa, cwb = _content(a), _content(b)
+    overlap = len(cwa & cwb) / max(len(cwa | cwb), 1)
     for x, y in _DIRECTION:
-        if ((x in wa) != (x in wb) or (y in wa) != (y in wb)) and ((x in wa or x in wb) and (y in wa or y in wb)):
+        if ((x in wa) != (x in wb) or (y in wa) != (y in wb)) and ((x in wa or x in wb) and (y in wa or y in wb)) \
+                and overlap >= 0.5:
             diffs.append(Difference("direction", CRITICAL, f"{x}/{y}"))
             break
     # Same words in a different order. Only critical when the words are not symmetric ("A and B").
@@ -235,7 +238,7 @@ def extract_differences(a: str, b: str, strict_content: bool = True) -> list[Dif
     if _langs(a) != _langs(b):
         diffs.append(Difference("language", CRITICAL, f"{sorted(_langs(a))} -> {sorted(_langs(b))}"))
 
-    ea, eb = _caps(a), _caps(b)
+    ea, eb = _caps(a) - wb, _caps(b) - wa  # "String" vs "string" is the same word, not a new entity
     if ea != eb and (ea | eb) - (ea & eb) - _langs(a) - _langs(b):
         diffs.append(Difference("entity", CRITICAL, f"{sorted(ea - eb)} -> {sorted(eb - ea)}"))
 
