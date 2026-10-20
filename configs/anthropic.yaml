@@ -43,8 +43,7 @@ bypass:
 multi_turn:
   context_turns: 4
 
-# USD per 1M tokens. Copy current rates from anthropic.com/pricing;
-# left at 0 so cost numbers are never silently wrong.
+# USD per 1M tokens, from platform.claude.com/docs/en/about-claude/pricing (checked 2026-10-20).
 pricing:
-  large: { input: 0.0, output: 0.0 }
-  small: { input: 0.0, output: 0.0 }
+  large: { input: 2.0, output: 10.0 }   # claude-sonnet-5-5
+  small: { input: 0.10, output: 0.50 }  # claude-haiku-5-5

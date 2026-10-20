@@ -4,3 +4,5 @@ __pycache__/
 data/
 config.yaml
 .pytest_cache/
+
+eval/results/*.jsonl
