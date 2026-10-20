@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ml = ["sentence-transformers>=3.0"]
+eval = ["datasets>=2.19"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]

@@ -49,3 +49,31 @@ def test_judge_gives_the_model_room_and_treats_empty_replies_as_unknown():
 
     ok, why = judge(P(), "q", "ref", "cand")
     assert ok is None and why == "" and seen["max_tokens"] >= 400
+
+
+def test_published_report_never_contains_prompt_text_but_local_copy_does():
+    from eval.spend import Tracker
+    from eval.stream import report
+    secret = "PRIVATE-USER-PROMPT about my landlord"
+    rows = [{"kind": "paraphrase", "query": secret, "tier": "hit", "reason": "hit: paraphrase", "cost": 0.0,
+             "ms": 100.0, "ok": False, "why": "NO: answers a different question"},
+            {"kind": "seed", "query": "another private seed", "tier": "miss", "reason": "miss: no candidates",
+             "cost": 0.003, "ms": 4000.0}]
+    base = {0.8: [{"kind": "paraphrase", "query": secret, "tier": "hit", "cost": 0.0, "ms": 5.0, "ok": False}]}
+    args = (rows, base, Tracker(1.0, {}), 0.003, [4000.0], False, 0, "t")
+    published, local = report(*args, True), report(*args, False)
+    assert secret not in published and "another private seed" not in published
+    assert "NOT acceptable [hit, paraphrase]" in published and "may not be redistributed" in published
+    assert secret in local
+
+
+def test_end_to_end_table_counts_wrong_reuse_per_system():
+    from eval.spend import Tracker
+    from eval.stream import report
+    rows = [{"kind": "paraphrase", "query": "q", "tier": "hit", "reason": "r", "cost": 0.0, "ms": 1.0, "ok": True}]
+    base = {0.8: [{"kind": "critical", "query": "q", "tier": "hit", "cost": 0.0, "ms": 1.0, "ok": False},
+                  {"kind": "seed", "query": "s", "tier": "miss", "cost": 0.003, "ms": 4000.0}]}
+    md = report(rows, base, Tracker(1.0, {}), 0.003, [4000.0], False, 0, "t", False)
+    assert "| Threshold cache (cosine >= 0.8) | 50% | 0/1 | 1 (50.0 per 100) |" in md
+    assert "| **GistCache** | 100% | 1/1 | 0 (0.0 per 100) |" in md
+    assert "| 0.8 | 0/0 | 0/0 | 1/1 |" in md  # the critical-variant hit is called out

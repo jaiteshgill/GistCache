@@ -455,9 +455,9 @@ Implemented as `eval/hard_set.jsonl` (118 pairs), `held_out.jsonl` (58) and `fre
 | Added constraint | "write a function" / "write a function with type hints" |
 | Time-sensitive | "latest Python version" / "latest Python version" (must never hit) |
 
-### Systems compared (planned)
+### Systems compared
 
-All three would run on the identical query stream. So far the plain threshold cache is only compared on the labelled pairs, using a fixed cosine threshold of 0.85.
+All three run on the identical query stream in `eval.stream`. The threshold cache is run at two operating points (0.80 and 0.90) rather than one tuned value, so the trade-off between reuse and wrong answers is visible.
 
 | System | Description |
 |---|---|
@@ -465,7 +465,7 @@ All three would run on the identical query stream. So far the plain threshold ca
 | **Threshold cache** | Standard semantic cache: cosine similarity above a tuned threshold returns the cached answer |
 | **GistCache** | Three tiers with verifier and fallback |
 
-The threshold baseline gets its threshold tuned on the same dev split as GistCache so the comparison is fair.
+GistCache's thresholds were not tuned on this stream either.
 
 ### Metrics (planned)
 
@@ -499,17 +499,27 @@ python -m eval.stream --dry-run                                 # whole pilot wi
 pytest                                                          # fast suite; GISTCACHE_SLOW=1 adds the full-model pins
 ```
 
+Real seeds (needs `pip install -e ".[eval]"`, a Hugging Face account, the LMSYS-Chat-1M license accepted on its dataset page, and `hf auth login`):
+
+```bash
+python -m eval.seeds_build --source lmsys --inspect    # schema of one row, no content
+python -m eval.seeds_build --source lmsys --n 150      # -> eval/data/seeds_lmsys.json (gitignored)
+```
+
+LMSYS-Chat-1M's license forbids redistribution, so its prompts stay in gitignored files and the published report contains no prompt text (a `.local.md` copy with text is gitignored). `--source dolly` uses the openly licensed databricks-dolly-15k instead. The filter keeps single-turn English prompts of 20 to 300 characters that are not flagged by moderation, not redacted, and contain no email, phone number, key, URL, code, role-play or time-sensitive request, then removes near-duplicates.
+
 Spends money (needs `ANTHROPIC_API_KEY`, and `ANTHROPIC_WORKSPACE_ID` if the key is not workspace-scoped; each has a hard cap):
 
 ```bash
-python -m eval.stream --config configs/anthropic.yaml --n 24 --cap 0.35   # end-to-end pilot, about $0.30
+python -m eval.stream --config configs/anthropic.yaml --seeds-file eval/data/seeds_lmsys.json --n 120 --cap 2   # full run
+python -m eval.stream --config configs/anthropic.yaml --n 24 --cap 0.35   # pilot on hand-written seeds, about $0.30
 python -m eval.volatility                                                 # volatility check, under a cent
 python -m eval.borderline --live --cap 0.03                               # second opinion on the borderline band
 python -m eval.borderline_stress --live --cap 0.02                        # is the judge too eager?
 python -m eval.patcher_check --live --cap 0.08                            # patcher prompt A/B, about $0.04
 ```
 
-Planned, not implemented: a single `gistcache eval ...` command group that runs the full LMSYS evaluation and produces the report tables.
+`eval.stream` runs GistCache and plain threshold caches (cosine 0.80 and 0.90 by default) on exactly the same query stream, pays for each distinct large-model request once and replays it to every system (so they see identical answers), judges every reused answer against a large-model reference, and writes the end-to-end table. A dry run prints a projected real cost; 150 seeds projects to about $1.65, with a worst case near $2.10 if every query needs its own large-model call.
 
 ## Results
 
@@ -612,7 +622,10 @@ gistcache/
 │   └── cli.py               # serve, log, stats, purge
 ├── eval/
 │   ├── run.py               # verifier eval on labelled pairs vs a threshold cache
-│   ├── stream.py            # end-to-end pilot with a hard spend cap (--dry-run is free)
+│   ├── stream.py            # end-to-end run: GistCache and threshold caches on one stream, judged (--dry-run is free)
+│   ├── baseline.py          # threshold-cache baseline and the shared large-model answer memo
+│   ├── seeds_build.py       # real-prompt seeds from LMSYS-Chat-1M or Dolly (output gitignored)
+│   ├── seed_filter.py       # which real prompts are usable: length, English, no personal data, no duplicates
 │   ├── variants.py          # labelled variant generation (cached on disk)
 │   ├── judge.py             # LLM judge for reused answers
 │   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies

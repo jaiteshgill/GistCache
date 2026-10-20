@@ -6,3 +6,5 @@ config.yaml
 .pytest_cache/
 
 eval/results/*.jsonl
+eval/results/*.local.md
+eval/results/*_dry.*
