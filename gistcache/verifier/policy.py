@@ -34,8 +34,12 @@ def decide(diffs: list[Difference], score: float, hit_threshold: float, near_thr
 
 
 def needs_guard(d: Decision) -> bool:
-    """Hits always get the contradiction check. So do near-hits no rule explains: when the only
-    differences are the generic content_added/content_removed net, the change could be an antonym."""
+    """Hits always get the contradiction check. So do near-hits that no rule fully explains: when the only
+    differences are the generic content_added/content_removed net, or when a content swap hides behind a
+    patchable difference (content_substituted), the change could be an antonym."""
     if d.tier == HIT:
         return True
-    return d.tier == NEAR_HIT and bool(d.differences) and all(x.kind.startswith("content_") for x in d.differences)
+    if d.tier != NEAR_HIT or not d.differences:
+        return False
+    return all(x.kind.startswith("content_") for x in d.differences) or any(
+        x.kind == "content_substituted" for x in d.differences)

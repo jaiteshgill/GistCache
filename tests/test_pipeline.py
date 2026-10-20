@@ -198,3 +198,11 @@ def test_contradiction_guard_still_vetoes_a_judge_promoted_hit():
 def test_borderline_verdict_parsing():
     from gistcache.verifier.borderline import parse
     assert parse("YES. same") and parse("**YES**") and not parse("NO. differs") and not parse("") and not parse("unsure")
+
+
+def test_guard_covers_a_swap_hidden_behind_a_patchable_difference():
+    p, large, small = make()
+    p.guard = FakeGuard(0.99)
+    ask(p, "give me a short bedtime story about a brave rabbit please")
+    r = ask(p, "give me a brief bedtime story about a cowardly rabbit please")
+    assert r.tier == "miss" and "contradiction" in r.reason and small.calls == 0

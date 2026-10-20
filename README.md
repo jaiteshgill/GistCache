@@ -507,19 +507,21 @@ These are small, hand-built pilots. They are not the full evaluation and should 
 
 The fresh set is the honest figure. Before the contradiction guard it was 50/69 with 11 wrongly reused. The 6 volatile queries are addressed by the volatility check, which caught 14 of 14 volatile and 0 of 14 stable queries on a separate 28-query check (`python -m eval.volatility`). Every set has been read by the author, so none is a clean held-out set.
 
-**End-to-end pilot** (`python -m eval.stream`; 24 hand-written seeds with Claude-generated paraphrase, patchable and critical variants, 96 queries, Sonnet 5.5 as large model and Haiku 5.5 as small model and judge, answers capped at 300 tokens, cold-start cache).
+**End-to-end pilot** (`python -m eval.stream`; 24 hand-written seeds with Claude-generated paraphrase, patchable and critical variants, 96 queries, Sonnet 5.5 as large model and Haiku 5.5 as small model and judge, answers capped at 300 tokens, cold-start cache). Two runs are shown because the borderline second opinion was switched on between them.
 
-| Query type | n | hit | near_hit | miss | Wrongly reused |
-|---|---|---|---|---|---|
-| seed (first sight) | 24 | 0 | 0 | 24 | 0 |
-| paraphrase | 24 | 12 | 3 | 9 | 0 |
-| patchable | 24 | 0 | 20 | 4 | 0 |
-| critical | 24 | 0 | 0 | 24 | 0 |
+| Query type | n | Run 1: hit / near / miss | Run 2 (borderline judge on): hit / near / miss | Wrongly reused (both runs) |
+|---|---|---|---|---|
+| seed (first sight) | 24 | 0 / 0 / 24 | 0 / 0 / 24 | 0 |
+| paraphrase | 24 | 12 / 3 / 9 | **17** / 0 / 7 | 0 |
+| patchable | 24 | 0 / 20 / 4 | 0 / 18 / 6 | 0 |
+| critical | 24 | 0 / 0 / 24 | 0 / 0 / 24 | 0 |
 
-- Judge verdict on reused answers: hits 12/12 acceptable, near-hits 22/23.
-- Cost: pipeline $0.195 versus an estimated $0.290 with no cache (33% saved). The baseline is the query count times the mean large-model call, and at most half of this stream could ever be reused.
-- Latency: hits 115 ms, near-hits 3.4 s, misses 4.2 s. Near-hits save cost but little time because the small model rewrites the whole answer.
-- Caveats: small sample; seeds written by hand; variants and judge both from the Claude family; answers truncated at 300 tokens.
+- **Quality** (LLM judge against a fresh reference answer): run 2 hits 17/17 acceptable, near-hits 18/18. Run 1 hits 12/12, near-hits 22/23 (the one failure asked for "a short table" and got two tables plus a list).
+- **Borderline judge:** it promoted 5 paraphrases to hits in run 2, all judged acceptable. A promoted hit takes about 1.2 s against 0.1 s for a plain hit.
+- **Cost:** pipeline $0.195 in both runs against an estimated $0.289 with no cache (32 to 33% saved). The baseline is the query count times the mean large-model call, and at most half of this stream could ever be reused. Total reuse was 35 of 96 in both runs: the 5 extra hits were offset by more near-hit attempts ending in `CANNOT_PATCH`, each of which wastes a small-model call and then pays for the large model anyway. The patcher is not deterministic, so near-hit counts vary between runs.
+- **Latency** (run 2): hits 0.4 s on average (0.1 s plain, 1.2 s judge-promoted), near-hits 3.3 s, misses 4.6 s. Near-hits save cost but little time because the small model rewrites the whole answer.
+- **A close call:** in run 2 a critical variant ("a cowardly rabbit") reached a near-hit attempt against a cached "brave rabbit" answer, because a harmless wording difference ("short" vs "brief") explained the pair and nothing checked the swapped word. Only the patcher's refusal stopped it. The verifier now sends any near-hit with a hidden content swap through the contradiction guard (`content_substituted`), and the real pair is vetoed with a contradiction score of 1.00. The pilot has not been rerun since this fix.
+- **Caveats:** small sample; seeds written by hand; variants and judge both from the Claude family; answers truncated at 300 tokens; two runs only.
 
 ### Full evaluation (placeholders)
 

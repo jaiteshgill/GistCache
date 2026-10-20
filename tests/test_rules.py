@@ -129,3 +129,22 @@ def test_to_from_in_different_phrasings_is_not_a_direction_swap():
 
 def test_type_name_capitalization_is_not_a_new_entity():
     assert "entity" not in kinds("How do I convert a string to an integer in Java?", "What is the way to turn a String into an int in Java?")
+
+
+# --- a content swap hiding behind a patchable difference (found by the pilot) -----------------
+def test_swap_hidden_behind_a_patchable_difference_is_marked():
+    d = {x.kind for x in extract_differences("Give me a short bedtime story about a brave rabbit",
+                                             "Give me a brief bedtime story about a cowardly rabbit")}
+    assert "content_substituted" in d
+
+
+def test_genuine_patchable_pairs_are_not_marked_as_substitutions():
+    for a, b in [("sort a list of numbers ascending", "sort a list of numbers descending"),
+                 ("explain recursion", "explain recursion briefly"),
+                 ("list the steps to bake bread", "list the steps to bake bread as a table")]:
+        assert "content_substituted" not in {x.kind for x in extract_differences(a, b)}
+
+
+def test_plain_paraphrase_substitution_does_not_become_a_near_hit():
+    # no other patchable difference, so word swaps stay with the scorer (hit) and the guard
+    assert extract_differences("how do i delete a branch", "how can i remove a branch") == []

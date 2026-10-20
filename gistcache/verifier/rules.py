@@ -262,6 +262,11 @@ def extract_differences(a: str, b: str, strict_content: bool = True) -> list[Dif
     # Safety net: if one query's content words are a strict subset of the other's, the extra words
     # are content the cached answer was not written for. Never serve that as a plain hit.
     ca, cb = _content(a), _content(b)
+    # A near-hit is only explained by its patchable phrase if everything else is the same. If each side also
+    # has content words the other lacks ("brave" vs "cowardly"), a swap is hiding behind the patchable
+    # difference, so mark it for the contradiction guard instead of trusting the explanation.
+    if (ca - cb) and (cb - ca) and any(d.severity == PATCHABLE for d in diffs):
+        diffs.append(Difference("content_substituted", PATCHABLE, f"{sorted(ca - cb)} -> {sorted(cb - ca)}"))
     if strict_content and ca and cb and ca != cb:
         if ca < cb:
             diffs.append(Difference("content_added", PATCHABLE, "+" + ",".join(sorted(cb - ca))))
