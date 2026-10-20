@@ -593,6 +593,7 @@ gistcache/
 │   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies
 │   ├── volatility.py        # validates the volatility check against a real model
 │   ├── borderline.py        # lists / measures the borderline second opinion
+│   ├── borderline_stress.py # is the judge too eager to say YES? (24 near-misses, 12 paraphrases)
 │   ├── spend.py             # spend tracking and cap
 │   ├── pin.py               # (re)generate pinned.json, the regression pins
 │   ├── pinned.json          # pinned rule differences and tiers for every eval pair
