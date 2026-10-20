@@ -22,7 +22,8 @@ verifier:
   strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
   nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
   contradiction_threshold: 0.5
-  borderline_judge: false      # EXPERIMENTAL: ask the small model about unsure pairs (see README); validate first
+  borderline_judge: true       # matches the reported run: adds one small-model judge call when the cross-encoder
+                               # is unsure (score between borderline_low and hit_threshold) and no rule objects
   borderline_low: 0.3          # lowest cross-encoder score that is still worth asking about
 
 patcher:
@@ -35,8 +36,8 @@ cache:
   path: ./data/gistcache.db
   max_entries: 100000
   default_ttl_seconds: null
-  volatility_check: false      # ask the small model once per stored answer if it goes stale; validate with
-                               # `python -m eval.volatility` before enabling
+  volatility_check: true       # ask the small model once per stored answer if it goes stale (on in the reported
+                               # evaluation; validated with Claude Haiku, re-run `python -m eval.volatility` for another model)
 
 bypass:
   max_temperature: 0.7
