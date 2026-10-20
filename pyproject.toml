@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gistcache"
+version = "0.1.0"
+description = "A semantic caching proxy for LLM APIs that reuses near-duplicate queries."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+ml = ["sentence-transformers>=3.0", "faiss-cpu>=1.8"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+gistcache = "gistcache.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gistcache*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

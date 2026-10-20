@@ -1,0 +1,42 @@
+providers:
+  large:
+    kind: openai            # openai | anthropic | ollama | openai_compatible
+    model: your-large-model
+    api_key_env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
+  small:
+    kind: openai
+    model: your-small-model
+    api_key_env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
+
+embedder:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  device: cpu
+
+verifier:
+  cross_encoder: cross-encoder/quora-distilroberta-base
+  hit_threshold: 0.90
+  near_threshold: 0.70
+  top_k: 5
+
+patcher:
+  enabled: true
+  max_length_ratio: 1.5
+  cache_patched_answers: false
+
+cache:
+  path: ./data/gistcache.db
+  max_entries: 100000
+  default_ttl_seconds: null
+
+bypass:
+  max_temperature: 0.7
+  with_tools: true
+
+multi_turn:
+  context_turns: 4
+
+pricing:                     # USD per 1M tokens
+  large: { input: 0.0, output: 0.0 }
+  small: { input: 0.0, output: 0.0 }
