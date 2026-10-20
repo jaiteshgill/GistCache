@@ -12,7 +12,7 @@ from .normalize import normalize
 from .store import Store
 from .verifier.cross import CosineScorer, Scorer
 from .verifier.guard import Guard
-from .verifier.policy import HIT, MISS, NEAR_HIT, Decision, decide
+from .verifier.policy import HIT, MISS, NEAR_HIT, Decision, decide, needs_guard
 from .verifier.rules import extract_differences, is_time_sensitive
 
 BYPASS = "bypass"
@@ -79,7 +79,7 @@ class Pipeline:
                 diffs = extract_differences(e.query, query, cfg["verifier"].get("strict_content_check", True))
                 d = decide(diffs, self.scorer.score(e.query, query, c),
                            cfg["verifier"]["hit_threshold"], cfg["verifier"]["near_threshold"], cosine=c)
-                if d.tier == HIT and self.guard:
+                if self.guard and needs_guard(d):
                     contra = self.guard.contradiction(e.query, query)
                     if contra >= cfg["verifier"].get("contradiction_threshold", 0.5):
                         d = Decision(MISS, f"miss: contradiction ({contra:.2f})", d.score, d.differences)

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from gistcache.config import load_config
 from gistcache.normalize import normalize
-from gistcache.verifier.policy import decide
+from gistcache.verifier.policy import decide, needs_guard
 from gistcache.verifier.rules import extract_differences, is_time_sensitive
 
 
@@ -39,7 +39,7 @@ def evaluate(rows, embedder, scorer, hit_t, near_t, baseline_t, strict=True, gua
         else:
             d = decide(extract_differences(a, b, strict), score, hit_t, near_t, cosine=cos)
             tier, reason = d.tier, d.reason
-            if tier == "hit" and guard and guard.contradiction(a, b) >= contra_t:
+            if guard and needs_guard(d) and guard.contradiction(a, b) >= contra_t:
                 tier, reason = "miss", "miss: contradiction"
         base = "hit" if cos >= baseline_t else "miss"
         out.append({**r, "cos": cos, "score": score, "got": tier, "reason": reason, "baseline": base})

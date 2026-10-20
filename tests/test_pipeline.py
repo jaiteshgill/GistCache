@@ -134,3 +134,11 @@ def test_volatility_check_skips_caching():
     p2.cfg["cache"]["volatility_check"] = True
     ask(p2, "how do I reset my password")
     assert len(p2.store.candidates("default", None)) == 1
+
+
+def test_guard_covers_near_hits_that_only_the_content_net_explains():
+    p, large, small = make()
+    p.guard = FakeGuard(0.99)
+    ask(p, "how do I structure an essay with a strong thesis")
+    r = ask(p, "how do I structure an essay with a weak thesis nobody reads")  # added content, no rule explains it
+    assert r.tier == "miss" and "contradiction" in r.reason

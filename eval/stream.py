@@ -96,6 +96,7 @@ def report(rows, tracker, mean_large, stopped_early, n_unjudged) -> str:
         L.append(f"| {kind} | {len(rs)} | {EXPECT[kind]} | {c['hit']} | {c['near_hit']} | {c['miss'] + c['bypass']} | {over} |")
     served = [r for r in rows if r["tier"] in ("hit", "near_hit")]
     judged = [r for r in served if r.get("ok") is not None]
+    unclear = [r for r in served if "why" in r and r.get("ok") is None]
     L.append("\n## Quality of reused answers (LLM judge vs fresh reference)\n")
     for tier in ("hit", "near_hit"):
         js = [r for r in judged if r["tier"] == tier]
@@ -103,7 +104,9 @@ def report(rows, tracker, mean_large, stopped_early, n_unjudged) -> str:
                  f" ({sum(1 for r in served if r['tier'] == tier) - len(js)} not judged)")
     bad = [r for r in judged if not r["ok"]]
     for r in bad:
-        L.append(f"  - NOT acceptable [{r['tier']}, {r['kind']}]: {r['query']!r} (served from {r['reason']})")
+        L.append(f"  - NOT acceptable [{r['tier']}, {r['kind']}]: {r['query']!r} ({r['reason']}) -> {r.get('why', '')[:140]!r}")
+    if unclear:
+        L.append(f"  - {len(unclear)} judge replies had no YES/NO and were excluded")
     pipe_cost = sum(r["cost"] for r in rows)
     base = n * mean_large
     L.append("\n## Cost and latency\n")
@@ -166,7 +169,8 @@ def main():
     def grade(r):
         try:
             ref = large.complete([{"role": "user", "content": r["query"]}], max_tokens=a.max_tokens).text
-            r["ok"] = judge(small, r["query"], ref, r["text"])
+            r["ok"], r["why"] = judge(small, r["query"], ref, r["text"])
+            r["ref"] = ref
             return 0
         except BudgetExceeded:
             return 1
@@ -180,7 +184,7 @@ def main():
     md = report(rows, tracker, mean_large, stopped, n_unjudged)
     name = "pilot_dry" if a.dry_run else "pilot"
     (out_dir / f"{name}.md").write_text(md)
-    (out_dir / f"{name}.jsonl").write_text("".join(json.dumps({k: v for k, v in r.items() if k != "text"}) + "\n" for r in rows))
+    (out_dir / f"{name}.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
     print("\n" + md)
 
 

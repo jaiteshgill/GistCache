@@ -31,3 +31,11 @@ def decide(diffs: list[Difference], score: float, hit_threshold: float, near_thr
     if not diffs and score >= near_threshold:
         return Decision(MISS, "miss: below hit threshold", score, diffs)
     return Decision(MISS, "miss: low similarity", score, diffs)
+
+
+def needs_guard(d: Decision) -> bool:
+    """Hits always get the contradiction check. So do near-hits no rule explains: when the only
+    differences are the generic content_added/content_removed net, the change could be an antonym."""
+    if d.tier == HIT:
+        return True
+    return d.tier == NEAR_HIT and bool(d.differences) and all(x.kind.startswith("content_") for x in d.differences)

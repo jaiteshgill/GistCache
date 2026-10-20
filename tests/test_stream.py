@@ -26,3 +26,12 @@ def test_parse_variants_rejects_malformed():
     assert parse('noise {"paraphrase":"a","patchable":"b","critical":"c"} tail') == {"paraphrase": "a", "patchable": "b", "critical": "c"}
     assert parse('{"paraphrase":"a"}') is None
     assert parse("no json") is None
+
+
+def test_judge_verdict_parsing():
+    from eval.judge import verdict
+    assert verdict("YES\nSame content.") is True
+    assert verdict("**YES**") is True
+    assert verdict("Verdict: NO - wrong format") is False
+    assert verdict("no") is False
+    assert verdict("maybe") is None
