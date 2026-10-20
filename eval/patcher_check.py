@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from gistcache.config import load_config
-from gistcache.patcher import PROMPT, PROMPT_V1, patch
+from gistcache.patcher import PROMPT, PROMPT_V1, patch_detail
 from gistcache.providers import build_provider
 from gistcache.verifier.rules import extract_differences
 
@@ -126,11 +126,12 @@ def main():
         diffs = extract_differences(seed, q)
         out = {}
         for name, prompt in (("v1", PROMPT_V1), ("v2", PROMPT)):
-            text, _ = patch(small, seed, ans, q, diffs, ratio, prompt=prompt)
+            text, comp, why = patch_detail(small, seed, ans, q, diffs, ratio, prompt=prompt)
             fmt = added = None
             if text:
                 fmt, added = grade(small, ans, q, text)
-            out[name] = {"patched": text is not None, "format_ok": fmt, "added": added, "text": text}
+            out[name] = {"patched": text is not None, "format_ok": fmt, "added": added, "text": text,
+                         "why": why, "raw": comp.text, "cached_len": len(ans)}
         return case, out
 
     with ThreadPoolExecutor(6) as ex:
@@ -147,8 +148,10 @@ def main():
     for (kind, seed, ans, q, tag), o in results:
         if kind == "must_refuse" and o["v2"]["patched"]:
             print(f"  v2 PATCHED A MUST-REFUSE case: {q!r}\n      -> {o['v2']['text'][:140]!r}")
-        if kind == "must_patch" and not o["v2"]["patched"]:
-            print(f"  v2 REFUSED a must-patch case: {q!r}")
+        for v in ("v1", "v2"):
+            if kind != "must_refuse" and not o[v]["patched"]:
+                print(f"  {v} REJECTED ({kind}) because {o[v]['why'].upper()}: {q!r}\n"
+                      f"      cached answer {o[v]['cached_len']} chars; model wrote {len(o[v]['raw'])} chars: {o[v]['raw'][:150]!r}")
         if o["v2"]["patched"] and o["v2"]["added"]:
             print(f"  v2 ADDED FACTS ({kind}): {q!r}\n      -> {o['v2']['text'][:140]!r}")
         if o["v2"]["patched"] and o["v2"]["format_ok"] is False:

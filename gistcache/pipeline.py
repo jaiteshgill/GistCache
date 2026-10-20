@@ -107,7 +107,7 @@ class Pipeline:
                                 decision.differences, False, judge_cost, t0)
 
         if decision.tier == NEAR_HIT and cand and self.small and cfg["patcher"]["enabled"]:
-            patched, c = patcher.patch(self.small, cand.query, cand.answer, query, decision.differences,
+            patched, c, why = patcher.patch_detail(self.small, cand.query, cand.answer, query, decision.differences,
                                        cfg["patcher"]["max_length_ratio"],
                                        prompt=patcher.PROMPTS[cfg["patcher"].get("prompt", "v1")])
             cost += cost_usd(pricing, "small", c.in_tokens, c.out_tokens)
@@ -118,7 +118,7 @@ class Pipeline:
                 return self._finish(scope, query, NEAR_HIT, decision.reason, patched, cand.id, cos,
                                     decision.score, decision.differences, False, cost, t0)
             fell_back = True
-            decision = Decision(MISS, "miss: near_hit fallback: CANNOT_PATCH", decision.score, decision.differences)
+            decision = Decision(MISS, f"miss: near_hit fallback: {why.upper()}", decision.score, decision.differences)
         elif decision.tier == NEAR_HIT:
             decision = Decision(MISS, "miss: near_hit but patcher disabled", decision.score, decision.differences)
 

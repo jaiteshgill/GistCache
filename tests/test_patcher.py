@@ -71,3 +71,29 @@ def test_pipeline_uses_the_configured_patcher_prompt():
 
     assert "WITHOUT inventing facts" in run(None)          # default stays v1 until v2 is validated
     assert "NOT new information" in run("v2")
+
+
+def test_rejections_say_why():
+    from gistcache.patcher import check, patch_detail
+    cached = "c" * 100
+    assert check("", cached, "q", 1.5) == (None, "empty")
+    assert check("CANNOT_PATCH", cached, "q", 1.5) == (None, "cannot_patch")
+    assert check("x" * 200, cached, "q", 1.5) == (None, "too_long")
+    assert check("x" * 10, cached, "q", 1.5) == (None, "too_short")
+    assert check("x" * 120, cached, "q", 1.5) == ("x" * 120, "ok")
+    text, comp, why = patch_detail(Spy("x" * 200), "a", cached, "q", D, 1.5)
+    assert text is None and why == "too_long" and comp.text == "x" * 200
+
+
+def test_pipeline_fallback_reason_names_the_real_cause():
+    from gistcache.config import load_config
+    from gistcache.embed import HashEmbedder
+    from gistcache.pipeline import Pipeline
+    from gistcache.store import Store
+    cfg = load_config(None)
+    cfg["verifier"].update(hit_threshold=0.8, near_threshold=0.5)
+    p = Pipeline(cfg, Store(), HashEmbedder(), Spy("A" * 60), Spy("x" * 500))  # patcher output far too long
+    ask = lambda q: p.handle([{"role": "user", "content": q}])
+    ask("sort a list of numbers in python ascending")
+    r = ask("sort a list of numbers in python descending")
+    assert r.tier == "miss" and r.fallback and r.reason == "miss: near_hit fallback: TOO_LONG"

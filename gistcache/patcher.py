@@ -52,19 +52,34 @@ PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT}
 def patch(provider: Provider, old_q: str, answer: str, new_q: str, diffs: list, max_ratio: float,
           prompt: str = PROMPT) -> tuple[str | None, Completion | None]:
     """Return (patched text or None if rejected, raw completion for cost accounting)."""
+    text, c, _ = patch_detail(provider, old_q, answer, new_q, diffs, max_ratio, prompt)
+    return text, c
+
+
+def patch_detail(provider: Provider, old_q: str, answer: str, new_q: str, diffs: list, max_ratio: float,
+                 prompt: str = PROMPT) -> tuple[str | None, Completion, str]:
+    """Like patch(), but also says why a rejected patch was rejected: one of cannot_patch, empty, too_long,
+    too_short, or "ok". The raw completion is returned so callers can inspect what the model wrote."""
     text = prompt.format(cp=CANNOT_PATCH, old_q=old_q, answer=answer, new_q=new_q,
                          diffs="; ".join(str(d) for d in diffs))
     c = provider.complete([{"role": "user", "content": text}])
-    return (validate(c.text, answer, new_q, max_ratio), c)
+    ok, reason = check(c.text, answer, new_q, max_ratio)
+    return ok, c, reason
+
+
+def check(text: str, cached: str, new_q: str, max_ratio: float) -> tuple[str | None, str]:
+    t = text.strip()
+    if not t:
+        return None, "empty"
+    if CANNOT_PATCH in t:
+        return None, "cannot_patch"
+    if len(t) > max_ratio * max(len(cached), 1):
+        return None, "too_long"  # grew too much: probably new content (or heavy markup on a short answer)
+    brief = any(w in new_q.lower() for w in ("brief", "short", "concise", "tl;dr", "eli5"))
+    if len(t) < 0.2 * len(cached) and not brief:
+        return None, "too_short"
+    return t, "ok"
 
 
 def validate(text: str, cached: str, new_q: str, max_ratio: float) -> str | None:
-    t = text.strip()
-    if not t or CANNOT_PATCH in t:
-        return None
-    if len(t) > max_ratio * max(len(cached), 1):
-        return None
-    brief = any(w in new_q.lower() for w in ("brief", "short", "concise", "tl;dr", "eli5"))
-    if len(t) < 0.2 * len(cached) and not brief:
-        return None
-    return t
+    return check(text, cached, new_q, max_ratio)[0]
