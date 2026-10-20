@@ -24,7 +24,9 @@ def verdict(text: str) -> bool | None:
     return None if not m else m.group(1) == "YES"
 
 
+# max_tokens is generous on purpose: the model can spend part of the budget on hidden reasoning, and a
+# too-small limit returned empty or cut-off replies that an earlier version misread as "NO".
 def judge(small, query: str, reference: str, candidate: str) -> tuple[bool | None, str]:
     out = small.complete([{"role": "user", "content": PROMPT.format(
-        query=query, reference=reference, candidate=candidate)}], max_tokens=80).text
+        query=query, reference=reference, candidate=candidate)}], max_tokens=600).text
     return verdict(out), out.strip()

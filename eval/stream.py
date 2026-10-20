@@ -96,7 +96,7 @@ def report(rows, tracker, mean_large, stopped_early, n_unjudged) -> str:
         L.append(f"| {kind} | {len(rs)} | {EXPECT[kind]} | {c['hit']} | {c['near_hit']} | {c['miss'] + c['bypass']} | {over} |")
     served = [r for r in rows if r["tier"] in ("hit", "near_hit")]
     judged = [r for r in served if r.get("ok") is not None]
-    unclear = [r for r in served if "why" in r and r.get("ok") is None]
+    unclear = [r for r in served if "why" in r and r.get("ok") is None]  # empty or no YES/NO
     L.append("\n## Quality of reused answers (LLM judge vs fresh reference)\n")
     for tier in ("hit", "near_hit"):
         js = [r for r in judged if r["tier"] == tier]

@@ -35,3 +35,17 @@ def test_judge_verdict_parsing():
     assert verdict("Verdict: NO - wrong format") is False
     assert verdict("no") is False
     assert verdict("maybe") is None
+
+
+def test_judge_gives_the_model_room_and_treats_empty_replies_as_unknown():
+    from eval.judge import judge
+    seen = {}
+
+    class P:
+        def complete(self, messages, **params):
+            seen.update(params)
+            from gistcache.providers import Completion
+            return Completion("")
+
+    ok, why = judge(P(), "q", "ref", "cand")
+    assert ok is None and why == "" and seen["max_tokens"] >= 400
