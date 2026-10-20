@@ -5,8 +5,9 @@ judge -> report.
   python -m eval.stream --config configs/anthropic.yaml --n 24 --cap 0.35              # hand-written seeds
   python -m eval.stream --config configs/anthropic.yaml --seeds-file eval/data/seeds_lmsys.json --n 120 --cap 2
 
-Spend is hard-capped. Phases: variants (small model), GistCache stream (stops at 55% of the cap), threshold
-baselines on the same stream (stop at 75%), judging (the rest). Each distinct large-model request is paid for
+Spend is hard-capped. Phases: variants (small model), GistCache stream (stops at 60% of the cap), threshold
+baselines on the same stream (stop at 70%), judging (the rest). In the pilot these took about 56%, 7% and 37%.
+A query that still fails after the provider's retries is skipped and counted, so one outage cannot lose a run. Each distinct large-model request is paid for
 once (see eval.baseline.Memo). With --seeds-file the published report contains no prompt text, because real
 datasets such as LMSYS-Chat-1M may not be redistributed; a .local.md copy with text is gitignored.
 """
@@ -205,11 +206,11 @@ def main():
     queries = build_queries(variants, rng)
     print(f"{len(variants)} seeds -> {len(queries)} queries; variants cost so far ${tracker.total:.4f}")
 
-    rows, stopped = [], False
+    rows, stopped, failed = [], False, []
     for i, q in enumerate(queries):
-        if tracker.total >= 0.55 * a.cap:
+        if tracker.total >= 0.6 * a.cap:
             stopped = True
-            print(f"stopping GistCache stream at {i}/{len(queries)}: 55% of cap used")
+            print(f"stopping GistCache stream at {i}/{len(queries)}: 60% of cap used")
             break
         try:
             r = pipe.handle([{"role": "user", "content": q["query"]}], scope="eval", max_tokens=a.max_tokens)
@@ -217,22 +218,28 @@ def main():
             stopped = True
             print("budget:", e)
             break
+        except Exception as e:  # still failing after retries: skip it, keep the run
+            failed.append(q)
+            print(f"[{i + 1}/{len(queries)}] {q['kind']:10} -> FAILED ({type(e).__name__}); skipped")
+            continue
         rows.append({**q, "tier": r.tier, "reason": r.reason, "cost": r.cost_usd, "ms": r.latency_ms, "text": r.text})
         print(f"[{i + 1}/{len(queries)}] {q['kind']:10} -> {r.tier:8} {r.reason[:48]}")
 
     base_rows = {}
     for t in [float(x) for x in a.baselines.split(",") if x.strip()]:
         tc, brs = ThresholdCache(emb, large, t, cfg["pricing"]), []
-        for q in queries[:len(rows)]:  # exactly the queries GistCache saw, in the same order
-            if tracker.total >= 0.75 * a.cap:
+        for q in (r for r in rows):  # exactly the queries GistCache answered, in the same order
+            if tracker.total >= 0.7 * a.cap:
                 stopped = True
-                print(f"stopping threshold {t:g} at {len(brs)}/{len(rows)}: 75% of cap used")
+                print(f"stopping threshold {t:g} at {len(brs)}/{len(rows)}: 70% of cap used")
                 break
             try:
-                brs.append({**q, **tc.handle(q["query"], a.max_tokens)})
+                brs.append({**{k: q[k] for k in ("seed", "kind", "query")}, **tc.handle(q["query"], a.max_tokens)})
             except BudgetExceeded:
                 stopped = True
                 break
+            except Exception:
+                failed.append(q)
         base_rows[t] = brs
         h = Counter(r["kind"] for r in brs if r["tier"] == "hit")
         print(f"threshold cache {t:g}: {sum(h.values())} hits ({h['critical']} on critical variants)")
@@ -251,7 +258,7 @@ def main():
                     verdicts[key] = done
             r["ok"], r["why"] = done
             return 0
-        except BudgetExceeded:
+        except Exception:  # BudgetExceeded, or a judge/reference call that kept failing: leave it unjudged
             return 1
 
     to_judge = [r for r in rows if r["tier"] in ("hit", "near_hit")]
@@ -261,7 +268,11 @@ def main():
         n_unjudged = sum(ex.map(grade, to_judge))
 
     mean_large = tracker.spent["large"] / tracker.calls["large"] if tracker.calls["large"] else 0.0
+    if failed:
+        print(f"{len(failed)} requests failed after retries and were skipped")
     md = report(rows, base_rows, tracker, mean_large, large.latencies(), stopped, n_unjudged, title, redact)
+    if failed:
+        md += f"\n{len(failed)} requests failed after retries and were skipped.\n"
     (out_dir / f"{name}.md").write_text(md)
     if redact:
         (out_dir / f"{name}.local.md").write_text(report(rows, base_rows, tracker, mean_large, large.latencies(),

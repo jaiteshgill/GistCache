@@ -1,8 +1,37 @@
 import os
+import time
 from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
+
+# Transient failures worth retrying: rate limits, overload (Anthropic 529), gateway errors, timeouts.
+# Anything else (400 bad request, 401 bad key, 404) fails immediately because retrying cannot fix it.
+RETRY_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
+RETRIES = 5
+_sleep = time.sleep  # swapped out in tests
+
+
+def _post(url: str, **kw) -> httpx.Response:
+    for attempt in range(RETRIES):
+        last = attempt == RETRIES - 1
+        try:
+            r = httpx.post(url, **kw)
+        except httpx.TransportError:  # connection reset, DNS hiccup, read timeout
+            if last:
+                raise
+            _sleep(2 ** attempt)
+            continue
+        if r.status_code in RETRY_STATUS and not last:
+            try:
+                wait = float(r.headers.get("retry-after", 2 ** attempt))
+            except ValueError:
+                wait = 2 ** attempt
+            _sleep(min(wait, 30))
+            continue
+        r.raise_for_status()
+        return r
+    raise AssertionError("unreachable")
 
 
 @dataclass
@@ -26,9 +55,8 @@ class OpenAICompatible:
 
     def complete(self, messages, **params) -> Completion:
         headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
-        r = httpx.post(f"{self.base_url}/chat/completions", headers=headers, timeout=120,
-                       json={"model": self.model, "messages": messages, **params})
-        r.raise_for_status()
+        r = _post(f"{self.base_url}/chat/completions", headers=headers, timeout=120,
+                  json={"model": self.model, "messages": messages, **params})
         d = r.json()
         u = d.get("usage", {})
         return Completion(d["choices"][0]["message"]["content"] or "",
@@ -52,8 +80,7 @@ class Anthropic:
         headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"}
         if self.workspace_id:
             headers["anthropic-workspace-id"] = self.workspace_id
-        r = httpx.post(f"{self.base_url}/v1/messages", timeout=120, json=body, headers=headers)
-        r.raise_for_status()
+        r = _post(f"{self.base_url}/v1/messages", timeout=120, json=body, headers=headers)
         d = r.json()
         return Completion("".join(b.get("text", "") for b in d["content"]),
                           d["usage"]["input_tokens"], d["usage"]["output_tokens"])

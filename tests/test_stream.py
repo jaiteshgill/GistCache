@@ -77,3 +77,24 @@ def test_end_to_end_table_counts_wrong_reuse_per_system():
     assert "| Threshold cache (cosine >= 0.8) | 50% | 0/1 | 1 (50.0 per 100) |" in md
     assert "| **GistCache** | 100% | 1/1 | 0 (0.0 per 100) |" in md
     assert "| 0.8 | 0/0 | 0/0 | 1/1 |" in md  # the critical-variant hit is called out
+
+
+def test_a_failing_query_is_skipped_not_fatal(monkeypatch, tmp_path):
+    import sys
+    import eval.stream as st
+    real = st.FakeProvider.complete
+    state = {"n": 0}
+
+    def flaky(self, messages, **params):
+        text = messages[-1]["content"]
+        if "Rust" in text and "building a test set" not in text and "grading" not in text:
+            raise RuntimeError("upstream kept failing")  # every critical variant fails permanently
+        return real(self, messages, **params)
+
+    monkeypatch.setattr(st.FakeProvider, "complete", flaky)
+    monkeypatch.setattr(st, "HERE", tmp_path)
+    monkeypatch.setattr(sys, "argv", ["stream", "--dry-run", "--n", "3", "--cap", "5", "--baselines", "0.8"])
+    st.main()
+    md = (tmp_path / "results" / "pilot_dry.md").read_text()
+    assert "requests failed after retries and were skipped" in md
+    assert "| seed | 3 |" in md and "| critical |" not in md  # the run finished; the failed queries are excluded
