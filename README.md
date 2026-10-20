@@ -4,7 +4,7 @@
 
 GistCache sits between your application and an LLM provider. It answers repeated questions from cache, adapts cached answers to slightly different questions with a small model and sends everything else to the large model. A verifier decides which path each request takes and falls back to the large model whenever reuse is not safe.
 
-> **Status:** in development. All result numbers in this README are placeholders until the full evaluation runs. See [Results](#results).
+> **Status:** in development. The core pipeline, verifier and evaluation harness are implemented and tested. The numbers under [Preliminary results](#preliminary-results) come from small pilots (hundreds of pairs and 96 queries) and are indicative only. The full-evaluation tables below remain placeholders.
 
 ---
 
@@ -151,6 +151,16 @@ else:                                                -> MISS
 ```
 
 Every decision carries a reason string such as `miss: negation mismatch` or `near_hit: sort direction`. Thresholds are tuned on a held-out split of the evaluation data, never on the test split.
+
+### Additional safety layers
+
+Evaluation on fresh data showed that rule lists and a duplicate-detection cross-encoder miss unseen antonyms, same-slot entity swaps and volatile topics. Three layers were added:
+
+- **Content safety net** (`verifier.strict_content_check`). If one query's content words are a strict subset of the other's, the extra words are content the cached answer was not written for. The pair is downgraded from hit to near-hit. It costs some hits and buys safety. Patchable phrases (format, order, verbosity, constraints) are removed before this comparison.
+- **Contradiction guard** (`verifier.nli_guard`). An NLI model checks whether the two queries contradict each other and vetoes the reuse if so. It runs on hits, and on near-hits that exist only because of the content net. Rules cannot list every antonym ("attract / repel"); a contradiction model generalizes. Used as an equivalence check NLI performed poorly, so the guard only vetoes.
+- **Volatility check** (`cache.volatility_check`). When a large-model answer is about to be stored, the small model is asked once whether the correct answer changes over time (prices, scores, office-holders, "is it open"). If so, the answer is not cached. No similarity check can detect this, because "is it raining in Vancouver?" does not contradict itself.
+
+Rule improvements made after testing on real LLM-written text: negation words are treated as one signal (`no`, `not`, `non-`, `without`), prefix negation and an antonym lexicon are checked, spelled-out numbers and ordinals count as numbers, possessives are stripped ("Java's"), sentence-initial capitals are not entities, `go`/`c`/`r` count as languages only in a language context, "A and B" / "A or B" comparisons are symmetric, direction swaps require shared vocabulary, and "weather" is time-sensitive only when asking about conditions.
 
 ## The near-hit tier
 
@@ -479,7 +489,37 @@ Use `--n 50` while developing to keep costs low.
 
 ## Results
 
-> **Placeholders.** These tables fill in automatically from `gistcache eval report`. No number below is real yet.
+### Preliminary results
+
+These are small, hand-built pilots. They are not the full evaluation and should not be quoted as final.
+
+**Verifier on hand-written pairs** (`python -m eval.run --file <set>.jsonl --split all`; real embedder, cross-encoder and NLI guard). "Wrongly reused" counts pairs where GistCache served more than the expected tier.
+
+| Set | Pairs | Plain threshold cache correct | GistCache correct | Wrongly reused |
+|---|---|---|---|---|
+| `hard_set.jsonl` (rules were tuned on this) | 118 | 50 | 113 | 0 |
+| `held_out.jsonl` (rules were tuned on this too) | 58 | 30 | 54 | 0 |
+| `fresh.jsonl` (written after tuning, not tuned on) | 69 | 36 | 55 | 6 (all volatile queries) |
+
+The fresh set is the honest figure. Before the contradiction guard it was 50/69 with 11 wrongly reused. The 6 volatile queries are addressed by the volatility check, which caught 14 of 14 volatile and 0 of 14 stable queries on a separate 28-query check (`python -m eval.volatility`). Every set has been read by the author, so none is a clean held-out set.
+
+**End-to-end pilot** (`python -m eval.stream`; 24 hand-written seeds with Claude-generated paraphrase, patchable and critical variants, 96 queries, Sonnet 5.5 as large model and Haiku 5.5 as small model and judge, answers capped at 300 tokens, cold-start cache).
+
+| Query type | n | hit | near_hit | miss | Wrongly reused |
+|---|---|---|---|---|---|
+| seed (first sight) | 24 | 0 | 0 | 24 | 0 |
+| paraphrase | 24 | 12 | 3 | 9 | 0 |
+| patchable | 24 | 0 | 20 | 4 | 0 |
+| critical | 24 | 0 | 0 | 24 | 0 |
+
+- Judge verdict on reused answers: hits 12/12 acceptable, near-hits 22/23.
+- Cost: pipeline $0.195 versus an estimated $0.290 with no cache (33% saved). The baseline is the query count times the mean large-model call, and at most half of this stream could ever be reused.
+- Latency: hits 115 ms, near-hits 3.4 s, misses 4.2 s. Near-hits save cost but little time because the small model rewrites the whole answer.
+- Caveats: small sample; seeds written by hand; variants and judge both from the Claude family; answers truncated at 300 tokens.
+
+### Full evaluation (placeholders)
+
+> These tables fill in automatically from `gistcache eval report`. No number below is real yet.
 
 ### End to end
 
@@ -533,30 +573,28 @@ gistcache/
 │   ├── verifier/
 │   │   ├── rules.py         # negation, numbers, entities, direction, versions, time
 │   │   ├── cross.py         # cross-encoder scoring
+│   │   ├── guard.py         # NLI contradiction guard
 │   │   └── policy.py        # tier decision and reasons
 │   ├── patcher.py           # near-hit adaptation and validation
 │   ├── providers/
-│   │   ├── openai.py
-│   │   ├── anthropic.py
-│   │   └── ollama.py
+│   │   └── base.py          # OpenAI-compatible (also Ollama) and Anthropic
 │   ├── cost.py              # token and cost accounting
 │   └── cli.py               # serve, log, stats, purge, eval
 ├── eval/
-│   ├── seeds.py
-│   ├── variants.py
-│   ├── references.py
-│   ├── run.py
-│   ├── judge.py
-│   ├── report.py
-│   ├── hard_set.jsonl
-│   └── prompts/
-│       ├── variants.md
-│       ├── patcher.md
-│       └── judge.md
+│   ├── run.py               # verifier eval on labelled pairs vs a threshold cache
+│   ├── stream.py            # end-to-end pilot with a hard spend cap (--dry-run is free)
+│   ├── variants.py          # labelled variant generation (cached on disk)
+│   ├── judge.py             # LLM judge for reused answers
+│   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies
+│   ├── volatility.py        # validates the volatility check against a real model
+│   ├── spend.py             # spend tracking and cap
+│   ├── seeds.py             # 40 hand-written seed prompts
+│   ├── build_hard_set.py    # -> hard_set.jsonl   (tuned on)
+│   ├── build_held_out.py    # -> held_out.jsonl   (tuned on)
+│   ├── build_fresh.py       # -> fresh.jsonl      (not tuned on)
+│   └── results/pilot.md     # latest pilot report
 ├── configs/
-│   ├── openai.yaml
-│   ├── anthropic.yaml
-│   └── ollama.yaml
+│   └── anthropic.yaml       # Sonnet large, Haiku small, real pricing
 ├── tests/
 ├── config.example.yaml
 ├── pyproject.toml
@@ -569,9 +607,10 @@ gistcache/
 pytest
 ```
 
-- **Unit tests** cover every rule check, the decision policy, patch validation, cost accounting and store operations.
-- **Integration tests** run the full proxy against a mock provider and assert the correct tier and headers for each hard-set category.
-- **Regression tests** pin the verifier's decisions on the hard set so a threshold change cannot silently break them.
+- **Rule and policy tests** cover each difference check (including regressions found on real LLM-written text) and the tier decision policy.
+- **Pipeline tests** run the full request lifecycle against mock providers: tiers, scope isolation, bypass paths, multi-turn context, the contradiction guard, the volatility check and decision logging.
+- **Harness tests** cover the spend cap, stream ordering, variant parsing and judge verdict parsing.
+- **Not yet covered:** the FastAPI server routes (streaming and headers) and the CLI are untested, and there are no pinned regression tests over the eval sets.
 
 ## Design decisions
 
