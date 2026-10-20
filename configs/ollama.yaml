@@ -1,0 +1,52 @@
+# Free local setup: no API key, nothing leaves your machine.
+#   ollama pull llama3.1:8b
+#   ollama pull qwen2.5:3b
+#   gistcache --config configs/ollama.yaml serve --port 8100
+#
+# The optional second-opinion features below are OFF here: they were only validated with Claude Haiku
+# (see README) and small local models have not been measured as judges. Turn them on at your own risk and
+# run `python -m eval.volatility` / `python -m eval.borderline_stress` against your model first.
+providers:
+  large:
+    kind: ollama
+    model: llama3.1:8b
+  small:
+    kind: ollama
+    model: qwen2.5:3b
+
+embedder:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  device: cpu
+
+verifier:
+  cross_encoder: cross-encoder/quora-distilroberta-base
+  hit_threshold: 0.90
+  near_threshold: 0.70
+  top_k: 5
+  strict_content_check: true
+  nli_guard: cross-encoder/nli-deberta-v3-small
+  contradiction_threshold: 0.5
+  borderline_judge: false
+  borderline_low: 0.3
+
+patcher:
+  enabled: true
+  max_length_ratio: 1.5
+  cache_patched_answers: false
+
+cache:
+  path: ./data/gistcache.db
+  max_entries: 100000
+  default_ttl_seconds: null
+  volatility_check: false
+
+bypass:
+  max_temperature: 0.7
+  with_tools: true
+
+multi_turn:
+  context_turns: 4
+
+pricing:                     # local models cost nothing per token
+  large: { input: 0.0, output: 0.0 }
+  small: { input: 0.0, output: 0.0 }

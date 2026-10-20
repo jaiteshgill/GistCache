@@ -603,7 +603,8 @@ gistcache/
 │   ├── build_fresh.py       # -> fresh.jsonl      (not tuned on)
 │   └── results/pilot.md     # latest pilot report
 ├── configs/
-│   └── anthropic.yaml       # Sonnet large, Haiku small, real pricing
+│   ├── anthropic.yaml       # Sonnet large, Haiku small, real pricing
+│   └── ollama.yaml          # free local models, optional judges off
 ├── tests/
 ├── config.example.yaml
 ├── pyproject.toml
@@ -621,7 +622,9 @@ pytest
 - **Proxy integration tests** (`tests/test_server.py`) drive the FastAPI app with a test client and mock providers: the `X-GistCache-*` response headers, hit / near-hit / fallback / bypass behaviour, scope isolation, streaming, `/v1/models`, and the 502 returned when the upstream provider fails.
 - **Pinned regression tests** (`tests/test_pinned.py`) record the verifier's decision on all 245 labelled eval pairs. The rule pins are fast and run on every `pytest`. The full-pipeline tier pins load the real models (about 10 seconds) and run with `GISTCACHE_SLOW=1 pytest`. If a behaviour change is intended, run `python -m eval.pin`, review the diff of `eval/pinned.json`, and commit it with the change.
 - **Harness tests** cover the spend cap, stream ordering, variant parsing and judge verdict parsing.
-- **Not yet covered:** the CLI, the real provider classes (they need network calls) and CI.
+- **CLI and config tests** (`tests/test_cli.py`) cover `log`, `stats`, `purge` (by scope and by age), `serve` wiring, and that every shipped config loads and builds its providers.
+- **CI** runs the fast suite on every push (Python 3.10 and 3.12) without the heavy ML packages.
+- **Not covered:** the real provider classes, which need network calls and a key, and the model-dependent behaviour outside the pinned eval pairs.
 
 ## Design decisions
 
@@ -659,4 +662,4 @@ A patched answer was produced from another cached answer. Caching it would let s
 
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).
