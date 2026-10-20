@@ -43,3 +43,9 @@ def test_select_stops_at_max_scan():
     rows = (lm(f"What is fact number {i} about the ocean?") for i in range(10_000))
     _, stats = select(rows, lmsys_prompt, n=1000, embedder=HashEmbedder(), rng=random.Random(1), max_scan=50)
     assert stats["scanned"] == 50
+
+
+def test_moderation_scores_reject_borderline_rows_that_were_not_flagged():
+    ok = lm("What is a healthy breakfast?", openai_moderation=[{"flagged": False, "category_scores": {"sexual": 0.01}}])
+    borderline = lm("some borderline prompt text here", openai_moderation=[{"flagged": False, "category_scores": {"sexual": 0.4}}])
+    assert lmsys_prompt(ok)[1] is None and lmsys_prompt(borderline)[1] == "moderation_score"

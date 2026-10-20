@@ -17,6 +17,7 @@ from pathlib import Path
 from .seed_filter import dedupe, reject_reason
 
 HERE = Path(__file__).parent
+MODERATION_MAX = 0.1
 
 
 def lmsys_prompt(row: dict) -> tuple[str | None, str | None]:
@@ -30,8 +31,13 @@ def lmsys_prompt(row: dict) -> tuple[str | None, str | None]:
         return None, "not_english"
     if row.get("redacted"):
         return None, "redacted"
-    if any(isinstance(m, dict) and m.get("flagged") for m in (row.get("openai_moderation") or [])):
+    mods = [m for m in (row.get("openai_moderation") or []) if isinstance(m, dict)]
+    if any(m.get("flagged") for m in mods):
         return None, "moderation_flagged"
+    # "flagged" is a high bar; borderline sexual, violent or hateful prompts pass it. Any category score at or
+    # above MODERATION_MAX rejects the row too.
+    if any(float(v) >= MODERATION_MAX for m in mods for v in (m.get("category_scores") or {}).values()):
+        return None, "moderation_score"
     return str(users[0].get("content", "")), None
 
 

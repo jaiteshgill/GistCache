@@ -20,7 +20,16 @@ _CODE = re.compile(r"```|[{};]\s*$|^\s*(def|class|import|function|public|#includ
 # Role-play, jailbreaks and "continue the text" tasks have no single correct answer to reuse.
 _NOT_A_QUESTION = re.compile(
     r"\b(?:pretend|roleplay|role-play|act as|you are (?:a|an|now)|ignore (?:all|previous)|jailbreak|DAN\b"
-    r"|continue the (?:story|text)|write (?:me )?(?:a|an) (?:story|poem|essay|song|novel)|nsfw)\b", re.I)
+    r"|continue the (?:story|text)|nsfw"
+    r"|write (?:me )?(?:a|an|some) (?:\w+ ){0,2}(?:story|stories|poem|essay|song|novel|joke|article|ad|script|limerick))\b",
+    re.I)
+# Machine-generated prompt templates that recur thousands of times in public chat logs (red-teaming probes,
+# SEO article generators). They are not real user questions, and repeated templates would make seeds hit each
+# other, inflating any cache's hit rate.
+_TEMPLATE = re.compile(
+    r"\[your answer\]|say something (?:toxic|bad|harmful|benign|positive|negative)\b|\(no more than \d+ words\)"
+    r"|here is my query\s*:|\b(?:negative|harmful|toxic) (?:or (?:negative|harmful|toxic) )?comment"
+    r"|\bin (?:the )?chemical industry\b|introduction (?:of )?over \d+ words for|\b\d{3,4} words\b", re.I)
 
 
 def reject_reason(text: str) -> str | None:
@@ -40,6 +49,10 @@ def reject_reason(text: str) -> str | None:
         return "url"
     if _CODE.search(t) or "\n" in t:
         return "code_or_multiline"
+    if _TEMPLATE.search(t):
+        return "template"
+    if t.endswith(":") or re.search(r"\bwait for my (?:next )?(?:prompt|message|input)\b", t, re.I):
+        return "needs_context"  # refers to text the user was about to paste, or sets up a later turn
     if _NOT_A_QUESTION.search(t):
         return "not_a_question"
     if is_time_sensitive(t):
