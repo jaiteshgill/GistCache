@@ -1,9 +1,10 @@
 import yaml
 
 DEFAULTS = {
-    "verifier": {"hit_threshold": 0.90, "near_threshold": 0.70, "top_k": 5},
+    "verifier": {"hit_threshold": 0.90, "near_threshold": 0.70, "top_k": 5, "strict_content_check": True,
+                 "contradiction_threshold": 0.5, "nli_guard": "cross-encoder/nli-deberta-v3-small"},
     "patcher": {"enabled": True, "max_length_ratio": 1.5, "cache_patched_answers": False},
-    "cache": {"path": "./data/gistcache.db", "max_entries": 100000, "default_ttl_seconds": None},
+    "cache": {"path": "./data/gistcache.db", "max_entries": 100000, "default_ttl_seconds": None, "volatility_check": False},
     "bypass": {"max_temperature": 0.7, "with_tools": True},
     "multi_turn": {"context_turns": 4},
     "pricing": {},

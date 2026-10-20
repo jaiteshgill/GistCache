@@ -92,3 +92,45 @@ def test_decisions_logged():
     p, *_ = make()
     ask(p, "how do I reset my password")
     assert p.store.last_decisions(1)[0]["tier"] == "miss"
+
+
+class FakeGuard:
+    def __init__(self, value): self.value, self.calls = value, 0
+
+    def contradiction(self, a, b):
+        self.calls += 1
+        return self.value
+
+
+def test_contradiction_guard_vetoes_a_hit():
+    p, large, _ = make()
+    p.guard = FakeGuard(0.99)
+    ask(p, "how do I reset my password")
+    r = ask(p, "how can I reset my password")
+    assert r.tier == "miss" and "contradiction" in r.reason and large.calls == 2
+
+
+def test_guard_allows_a_hit_when_no_contradiction():
+    p, large, _ = make()
+    p.guard = FakeGuard(0.01)
+    ask(p, "how do I reset my password")
+    assert ask(p, "how can I reset my password").tier == "hit"
+
+
+def test_guard_not_called_for_near_hits():
+    p, large, small = make()
+    p.guard = FakeGuard(0.99)
+    ask(p, "sort a list of numbers in python ascending")
+    assert ask(p, "sort a list of numbers in python descending").tier == "near_hit"
+    assert p.guard.calls == 0
+
+
+def test_volatility_check_skips_caching():
+    p, large, small = make(small_reply="YES")
+    p.cfg["cache"]["volatility_check"] = True
+    ask(p, "how do I reset my password")
+    assert p.store.candidates("default", None) == []
+    p2, large2, small2 = make(small_reply="NO")
+    p2.cfg["cache"]["volatility_check"] = True
+    ask(p2, "how do I reset my password")
+    assert len(p2.store.candidates("default", None)) == 1

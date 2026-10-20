@@ -11,6 +11,7 @@ from .index import top_k
 from .normalize import normalize
 from .store import Store
 from .verifier.cross import CosineScorer, Scorer
+from .verifier.guard import Guard
 from .verifier.policy import HIT, MISS, NEAR_HIT, Decision, decide
 from .verifier.rules import extract_differences, is_time_sensitive
 
@@ -30,8 +31,10 @@ class Result:
 
 
 class Pipeline:
-    def __init__(self, cfg: dict, store: Store, embedder, large, small=None, scorer: Scorer | None = None):
+    def __init__(self, cfg: dict, store: Store, embedder, large, small=None, scorer: Scorer | None = None,
+                 guard: Guard | None = None):
         self.cfg, self.store, self.embedder = cfg, store, embedder
+        self.guard = guard
         self.large, self.small = large, small
         self.scorer = scorer or CosineScorer()
 
@@ -73,9 +76,13 @@ class Pipeline:
             best = None
             for pos, c in top_k(qvec, vecs, cfg["verifier"]["top_k"]):
                 e = entries[pos]
-                diffs = extract_differences(e.query, query)
+                diffs = extract_differences(e.query, query, cfg["verifier"].get("strict_content_check", True))
                 d = decide(diffs, self.scorer.score(e.query, query, c),
                            cfg["verifier"]["hit_threshold"], cfg["verifier"]["near_threshold"], cosine=c)
+                if d.tier == HIT and self.guard:
+                    contra = self.guard.contradiction(e.query, query)
+                    if contra >= cfg["verifier"].get("contradiction_threshold", 0.5):
+                        d = Decision(MISS, f"miss: contradiction ({contra:.2f})", d.score, d.differences)
                 rank = {HIT: 2, NEAR_HIT: 1, MISS: 0}[d.tier]
                 if best is None or (rank, d.score) > (best[0], best[1].score):
                     best = (rank, d, e, c)
@@ -105,12 +112,28 @@ class Pipeline:
 
         c = self.large.complete(messages, **({"temperature": temperature} if temperature is not None else {}), **params)
         cost += cost_usd(pricing, "large", c.in_tokens, c.out_tokens)
-        if not time_sensitive and not unresolved and c.text:
+        cacheable = not time_sensitive and not unresolved and bool(c.text)
+        if cacheable:
+            volatile, vcost = self._is_volatile(query)
+            cost += vcost
+            cacheable = not volatile
+        if cacheable:
             if qvec is None:
                 qvec = self.embedder.encode(normalize(query))
             self._store(scope, ctx, query, c.text, self.large.model, qvec)
         return self._finish(scope, query, MISS, decision.reason, c.text, cand.id if fell_back and cand else None,
                             cos, decision.score, decision.differences, fell_back, cost, t0)
+
+    def _is_volatile(self, query: str) -> tuple[bool, float]:
+        """Ask the small model whether the correct answer changes over time. Runs once per stored answer."""
+        if not (self.cfg["cache"].get("volatility_check") and self.small):
+            return False, 0.0
+        c = self.small.complete([{"role": "user", "content":
+            "Does the correct answer to this question change over time (news, prices, scores, weather, "
+            "current office-holders, availability, anything 'right now')? Reply with only YES or NO.\n\n"
+            f"Question: {query}"}])
+        cost = cost_usd(self.cfg.get("pricing", {}), "small", c.in_tokens, c.out_tokens)
+        return c.text.strip().upper().startswith("YES"), cost
 
     def _store(self, scope, ctx, query, answer, model, qvec):
         self.store.add_entry(scope, ctx, query, normalize(query), answer, model,

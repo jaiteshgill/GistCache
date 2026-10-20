@@ -17,15 +17,18 @@ def build_pipeline(cfg: dict) -> Pipeline:
     try:
         from .embed import SentenceTransformerEmbedder
         from .verifier.cross import CrossEncoderScorer
+        from .verifier.guard import NLIGuard
         e = cfg.get("embedder", {})
         embedder = SentenceTransformerEmbedder(e.get("model", "sentence-transformers/all-MiniLM-L6-v2"),
                                                e.get("device", "cpu"))
         scorer = CrossEncoderScorer(cfg.get("verifier", {}).get("cross_encoder", "cross-encoder/quora-distilroberta-base"))
+        guard = NLIGuard(cfg["verifier"]["nli_guard"]) if cfg["verifier"].get("nli_guard") else None
     except ImportError:
+        guard = None
         print("warning: install gistcache[ml] for the real embedder and cross-encoder; using hash fallback")
         embedder, scorer = HashEmbedder(), None
     small = build_provider(cfg["providers"]["small"]) if "small" in cfg["providers"] else None
-    return Pipeline(cfg, store, embedder, build_provider(cfg["providers"]["large"]), small, scorer)
+    return Pipeline(cfg, store, embedder, build_provider(cfg["providers"]["large"]), small, scorer, guard)
 
 
 def create_app(pipeline: Pipeline) -> FastAPI:

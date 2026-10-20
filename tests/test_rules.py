@@ -51,3 +51,52 @@ def test_format_words_are_not_entities():
 
 def test_list_as_noun_is_not_a_format():
     assert kinds("what is the difference between a list and a tuple", "how do lists and tuples differ") == set()
+
+
+def test_prefix_negation():
+    assert "negation" in kinds("is it legal to record calls", "is it illegal to record calls")
+
+
+def test_antonym_lexicon_uses_stems():
+    assert "negation" in kinds("how do I allow cookies", "how do I blocking cookies")
+    assert "negation" in kinds("how to speed up my laptop", "how to slow down my laptop")
+
+
+def test_contractions_normalize_to_the_same_negation():
+    assert "negation" not in kinds("my laptop wont turn on", "my laptop does not turn on")
+    assert "negation" in kinds("why does my code work", "why doesn't my code work")
+
+
+def test_no_abbreviation_is_not_negation():
+    assert "negation" not in kinds("what is the no. of items", "what is the number of items")
+
+
+def test_number_words_and_ordinals():
+    assert "number" in kinds("give me three reasons", "give me five reasons")
+    assert "number" in kinds("explain the 1st amendment", "explain the 2nd amendment")
+    assert "number" in kinds("dress for 10 degrees", "dress for minus 10 degrees")
+
+
+def test_sort_phrases_do_not_count_as_numbers():
+    d = {x.kind for x in extract_differences("sort users by date", "sort users by date newest first")}
+    assert "number" not in d and "sort_order" in d
+
+
+def test_ambiguous_language_names_need_context():
+    assert "language" not in kinds("go to the airport", "get to the airport")
+    assert "language" in kinds("write a function in c", "write a function in c++")
+    assert "language" in kinds("write a function in go", "write a function in rust")
+
+
+def test_symmetric_comparison_is_not_a_direction_change():
+    assert "direction" not in kinds("difference between mean and median", "difference between median and mean")
+
+
+def test_content_added_blocks_a_plain_hit():
+    assert "content_added" in kinds("what is a mutex", "what is a mutex with locking semantics")
+    assert extract_differences("what is a mutex", "what is a mutex with locking semantics", strict_content=False) == []
+
+
+def test_volatile_phrases():
+    for q in ("weather in toronto", "who is the ceo of apple", "what time is it", "is the store open"):
+        assert "time_sensitive" in kinds(q, q)

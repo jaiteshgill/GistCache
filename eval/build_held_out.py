@@ -35,11 +35,10 @@ PAIRS = {
         ("best laptop for students", "best laptop for gamers"),
         ("treatment for a headache", "treatment for a migraine"),
     ],
-    ("role_swap", MISS): [
+    ("role_swap", MISS): [  # NOTE: the "lincoln or douglas" pair is symmetric; it lives in paraphrase_hard now
         ("google sued oracle, who won", "oracle sued google, who won"),
         ("why did france invade russia", "why did russia invade france"),
         ("how does a dog differ from a wolf in diet", "how does a wolf differ from a dog in diet"),
-        ("who was taller, lincoln or douglas", "who was taller, douglas or lincoln"),
         ("how to hire a lawyer as a landlord", "how to hire a lawyer as a tenant"),
         ("what does the doctor owe the patient", "what does the patient owe the doctor"),
     ],
@@ -79,6 +78,7 @@ PAIRS = {
         ("what is machine learning", "can you explain machine learning to me"),
         ("how do i make my resume stand out", "ways to make my resume stand out"),
         ("how do i fix a leaking tap", "my tap is leaking, how do i fix it"),
+        ("who was taller, lincoln or douglas", "who was taller, douglas or lincoln"),  # relabelled: symmetric
     ],
 }
 

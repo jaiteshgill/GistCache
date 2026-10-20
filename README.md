@@ -306,6 +306,9 @@ verifier:
   hit_threshold: 0.90       # tuned on the dev split
   near_threshold: 0.70
   top_k: 5
+  strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
+  nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
+  contradiction_threshold: 0.5
   rules:
     negation: true
     direction: true
@@ -324,6 +327,7 @@ cache:
   index_path: ./data/index.faiss
   max_entries: 100000
   default_ttl_seconds: null
+  volatility_check: false   # ask the small model whether a stored answer goes stale
 
 bypass:
   max_temperature: 0.7

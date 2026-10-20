@@ -17,17 +17,18 @@ from gistcache.verifier.rules import extract_differences, is_time_sensitive
 RANK = {"miss": 0, "near_hit": 1, "hit": 2}  # reuse level; over-reuse = more permissive than expected
 
 
-def load_models(real: bool):
+def load_models(real: bool, guard: bool = True):
     if real:
         from gistcache.embed import SentenceTransformerEmbedder
         from gistcache.verifier.cross import CrossEncoderScorer
-        return SentenceTransformerEmbedder(), CrossEncoderScorer()
+        from gistcache.verifier.guard import NLIGuard
+        return SentenceTransformerEmbedder(), CrossEncoderScorer(), (NLIGuard() if guard else None)
     from gistcache.embed import HashEmbedder
     from gistcache.verifier.cross import CosineScorer
-    return HashEmbedder(), CosineScorer()
+    return HashEmbedder(), CosineScorer(), None
 
 
-def evaluate(rows, embedder, scorer, hit_t, near_t, baseline_t):
+def evaluate(rows, embedder, scorer, hit_t, near_t, baseline_t, strict=True, guard=None, contra_t=0.5):
     out = []
     for r in rows:
         a, b = r["cached"], r["new"]
@@ -36,8 +37,10 @@ def evaluate(rows, embedder, scorer, hit_t, near_t, baseline_t):
         if is_time_sensitive(a) or is_time_sensitive(b):
             tier, reason = "miss", "miss: time-sensitive"
         else:
-            d = decide(extract_differences(a, b), score, hit_t, near_t, cosine=cos)
+            d = decide(extract_differences(a, b, strict), score, hit_t, near_t, cosine=cos)
             tier, reason = d.tier, d.reason
+            if tier == "hit" and guard and guard.contradiction(a, b) >= contra_t:
+                tier, reason = "miss", "miss: contradiction"
         base = "hit" if cos >= baseline_t else "miss"
         out.append({**r, "cos": cos, "score": score, "got": tier, "reason": reason, "baseline": base})
     return out
@@ -68,21 +71,28 @@ def report(res, show_errors):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--file", default="hard_set.jsonl", help="hard_set.jsonl or held_out.jsonl")
-    p.add_argument("--split", choices=["dev", "test", "heldout", "all"], default="dev")
+    p.add_argument("--split", choices=["dev", "test", "heldout", "fresh", "all"], default="dev")
     p.add_argument("--config")
     p.add_argument("--hash", action="store_true", help="use the dependency-free fallback models")
     p.add_argument("--baseline-threshold", type=float, default=0.85)
     p.add_argument("--errors", action="store_true")
+    p.add_argument("--no-strict", action="store_true", help="disable the content-subset safety net")
+    p.add_argument("--hit-threshold", type=float)
+    p.add_argument("--no-guard", action="store_true", help="disable the NLI contradiction veto")
     a = p.parse_args()
     cfg = load_config(a.config)
     rows = [json.loads(l) for l in (Path(__file__).parent / a.file).read_text().splitlines()]
     if a.split != "all":
         rows = [r for r in rows if r["split"] == a.split]
-    emb, sc = load_models(not a.hash)
+    emb, sc, guard = load_models(not a.hash, not a.no_guard)
     v = cfg["verifier"]
+    if a.hit_threshold:
+        v["hit_threshold"] = a.hit_threshold
     print(f"split={a.split} pairs={len(rows)} hit_t={v['hit_threshold']} near_t={v['near_threshold']} "
           f"baseline_t={a.baseline_threshold}\n")
-    report(evaluate(rows, emb, sc, v["hit_threshold"], v["near_threshold"], a.baseline_threshold), a.errors)
+    report(evaluate(rows, emb, sc, v["hit_threshold"], v["near_threshold"], a.baseline_threshold,
+                      strict=not a.no_strict, guard=guard,
+                      contra_t=v.get("contradiction_threshold", 0.5)), a.errors)
 
 
 if __name__ == "__main__":

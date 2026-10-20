@@ -1,0 +1,69 @@
+{"id": "antonym-00", "category": "antonym", "cached": "how to attract mosquitoes", "new": "how to repel mosquitoes", "expected": "miss", "split": "fresh"}
+{"id": "antonym-01", "category": "antonym", "cached": "should i accelerate my mortgage payments", "new": "should i delay my mortgage payments", "expected": "miss", "split": "fresh"}
+{"id": "antonym-02", "category": "antonym", "cached": "how do i freeze bread", "new": "how do i thaw bread", "expected": "miss", "split": "fresh"}
+{"id": "antonym-03", "category": "antonym", "cached": "how to tighten a bolt", "new": "how to loosen a bolt", "expected": "miss", "split": "fresh"}
+{"id": "antonym-04", "category": "antonym", "cached": "how do i merge two branches", "new": "how do i split a branch", "expected": "miss", "split": "fresh"}
+{"id": "antonym-05", "category": "antonym", "cached": "pros of remote work", "new": "cons of remote work", "expected": "miss", "split": "fresh"}
+{"id": "antonym-06", "category": "antonym", "cached": "is coffee good for you", "new": "is coffee bad for you", "expected": "miss", "split": "fresh"}
+{"id": "antonym-07", "category": "antonym", "cached": "how to increase my credit score", "new": "how to decrease my credit score", "expected": "miss", "split": "fresh"}
+{"id": "antonym-08", "category": "antonym", "cached": "how to inflate a bike tire", "new": "how to deflate a bike tire", "expected": "miss", "split": "fresh"}
+{"id": "antonym-09", "category": "antonym", "cached": "how to encourage a child to read", "new": "how to discourage a child from reading", "expected": "miss", "split": "fresh"}
+{"id": "number-00", "category": "number", "cached": "how many calories in 1 cup of rice", "new": "how many calories in 2 cups of rice", "expected": "miss", "split": "fresh"}
+{"id": "number-01", "category": "number", "cached": "what to do on a 2 hour layover", "new": "what to do on a 6 hour layover", "expected": "miss", "split": "fresh"}
+{"id": "number-02", "category": "number", "cached": "explain the third law of motion", "new": "explain the first law of motion", "expected": "miss", "split": "fresh"}
+{"id": "number-03", "category": "number", "cached": "how much to tip on a $40 bill", "new": "how much to tip on a $400 bill", "expected": "miss", "split": "fresh"}
+{"id": "number-04", "category": "number", "cached": "convert 100 fahrenheit to celsius", "new": "convert 200 fahrenheit to celsius", "expected": "miss", "split": "fresh"}
+{"id": "number-05", "category": "number", "cached": "a 30 minute workout for beginners", "new": "a 45 minute workout for beginners", "expected": "miss", "split": "fresh"}
+{"id": "number-06", "category": "number", "cached": "how to say hello in 3 languages", "new": "how to say hello in 10 languages", "expected": "miss", "split": "fresh"}
+{"id": "number-07", "category": "number", "cached": "write a limerick about cats", "new": "write a haiku about cats", "expected": "miss", "split": "fresh"}
+{"id": "entity-00", "category": "entity", "cached": "symptoms of covid", "new": "symptoms of strep throat", "expected": "miss", "split": "fresh"}
+{"id": "entity-01", "category": "entity", "cached": "how to install node on windows", "new": "how to install node on linux", "expected": "miss", "split": "fresh"}
+{"id": "entity-02", "category": "entity", "cached": "is it safe to travel to japan", "new": "is it safe to travel to egypt", "expected": "miss", "split": "fresh"}
+{"id": "entity-03", "category": "entity", "cached": "recipe for chocolate chip cookies", "new": "recipe for oatmeal cookies", "expected": "miss", "split": "fresh"}
+{"id": "entity-04", "category": "entity", "cached": "who wrote hamlet", "new": "who wrote macbeth", "expected": "miss", "split": "fresh"}
+{"id": "entity-05", "category": "entity", "cached": "difference between a crocodile and an alligator", "new": "difference between a crocodile and a lizard", "expected": "miss", "split": "fresh"}
+{"id": "entity-06", "category": "entity", "cached": "how to train a puppy", "new": "how to train a kitten", "expected": "miss", "split": "fresh"}
+{"id": "entity-07", "category": "entity", "cached": "best time to visit paris", "new": "best time to visit london", "expected": "miss", "split": "fresh"}
+{"id": "entity-08", "category": "entity", "cached": "how do i reset my iphone", "new": "how do i reset my android phone", "expected": "miss", "split": "fresh"}
+{"id": "role-00", "category": "role", "cached": "how does a teacher evaluate a student", "new": "how does a student evaluate a teacher", "expected": "miss", "split": "fresh"}
+{"id": "role-01", "category": "role", "cached": "apple acquired shazam, why", "new": "shazam acquired apple, why", "expected": "miss", "split": "fresh"}
+{"id": "role-02", "category": "role", "cached": "should i lend money to my brother", "new": "should i borrow money from my brother", "expected": "miss", "split": "fresh"}
+{"id": "role-03", "category": "role", "cached": "how does a lawyer protect a client", "new": "how does a client protect a lawyer", "expected": "miss", "split": "fresh"}
+{"id": "role-04", "category": "role", "cached": "who does the tenant pay rent to", "new": "who does the landlord pay rent to", "expected": "miss", "split": "fresh"}
+{"id": "language_version-00", "category": "language_version", "cached": "implement quicksort in c", "new": "implement quicksort in rust", "expected": "miss", "split": "fresh"}
+{"id": "language_version-01", "category": "language_version", "cached": "how to use tensorflow 1", "new": "how to use tensorflow 2", "expected": "miss", "split": "fresh"}
+{"id": "language_version-02", "category": "language_version", "cached": "lambda syntax in java 8", "new": "lambda syntax in java 17", "expected": "miss", "split": "fresh"}
+{"id": "language_version-03", "category": "language_version", "cached": "regex in python", "new": "regex in perl", "expected": "miss", "split": "fresh"}
+{"id": "language_version-04", "category": "language_version", "cached": "how to use async await in c#", "new": "how to use async await in f#", "expected": "miss", "split": "fresh"}
+{"id": "language_version-05", "category": "language_version", "cached": "write a function in r to compute the mean", "new": "write a function in python to compute the mean", "expected": "miss", "split": "fresh"}
+{"id": "volatile-00", "category": "volatile", "cached": "is it raining in vancouver", "new": "is it raining in vancouver?", "expected": "miss", "split": "fresh"}
+{"id": "volatile-01", "category": "volatile", "cached": "what is the score of the leafs game", "new": "what is the score of the leafs game?", "expected": "miss", "split": "fresh"}
+{"id": "volatile-02", "category": "volatile", "cached": "how much does a tesla cost", "new": "how much does a tesla cost?", "expected": "miss", "split": "fresh"}
+{"id": "volatile-03", "category": "volatile", "cached": "who is the richest person in the world", "new": "who is the richest person in the world?", "expected": "miss", "split": "fresh"}
+{"id": "volatile-04", "category": "volatile", "cached": "is the website down", "new": "is the website down?", "expected": "miss", "split": "fresh"}
+{"id": "volatile-05", "category": "volatile", "cached": "what's the temperature outside", "new": "what's the temperature outside?", "expected": "miss", "split": "fresh"}
+{"id": "patchable-00", "category": "patchable", "cached": "how do i bake bread", "new": "how do i bake bread for beginners", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-01", "category": "patchable", "cached": "explain photosynthesis", "new": "explain photosynthesis in one sentence", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-02", "category": "patchable", "cached": "write a python function to reverse a list", "new": "write a python function to reverse a list with a docstring", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-03", "category": "patchable", "cached": "list the largest countries", "new": "list the largest countries as a table", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-04", "category": "patchable", "cached": "how to tie a tie", "new": "how to tie a tie, step by step", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-05", "category": "patchable", "cached": "sort the employees by salary", "new": "sort the employees by salary highest first", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-06", "category": "patchable", "cached": "what is inflation", "new": "what is inflation? include examples", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-07", "category": "patchable", "cached": "describe the plot of hamlet", "new": "describe the plot of hamlet in two sentences", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-08", "category": "patchable", "cached": "what is a closure", "new": "what is a closure, give an example", "expected": "near_hit", "split": "fresh"}
+{"id": "patchable-09", "category": "patchable", "cached": "explain how a loan works", "new": "explain how a loan works, keep it brief", "expected": "near_hit", "split": "fresh"}
+{"id": "paraphrase-00", "category": "paraphrase", "cached": "how do i change my username", "new": "how can i change my username", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-01", "category": "paraphrase", "cached": "what is the boiling point of water", "new": "at what temperature does water boil", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-02", "category": "paraphrase", "cached": "how to learn spanish fast", "new": "fastest way to learn spanish", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-03", "category": "paraphrase", "cached": "what are the symptoms of the flu", "new": "flu symptoms", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-04", "category": "paraphrase", "cached": "how do i undo a git commit", "new": "how can i undo my last git commit", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-05", "category": "paraphrase", "cached": "is python good for beginners", "new": "is python a good language for beginners", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-06", "category": "paraphrase", "cached": "how to make coffee without a machine", "new": "how can i make coffee without a coffee machine", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-07", "category": "paraphrase", "cached": "how to save money", "new": "how can i save money effectively", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-08", "category": "paraphrase", "cached": "who invented the telephone", "new": "who was the inventor of the telephone", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-09", "category": "paraphrase", "cached": "difference between mean and median", "new": "difference between median and mean", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-10", "category": "paraphrase", "cached": "what is the relationship between a parent company and a subsidiary", "new": "what is the relationship between a subsidiary and a parent company", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-11", "category": "paraphrase", "cached": "help, my wifi isnt working", "new": "my wifi is not working, help", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-12", "category": "paraphrase", "cached": "how to make pancakes", "new": "how do i make pancakes", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-13", "category": "paraphrase", "cached": "how do i reset my pasword", "new": "how do i reset my password", "expected": "hit", "split": "fresh"}
+{"id": "paraphrase-14", "category": "paraphrase", "cached": "what does api stand for", "new": "api stands for what", "expected": "hit", "split": "fresh"}

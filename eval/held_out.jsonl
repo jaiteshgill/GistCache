@@ -24,9 +24,8 @@
 {"id": "role_swap-00", "category": "role_swap", "cached": "google sued oracle, who won", "new": "oracle sued google, who won", "expected": "miss", "split": "heldout"}
 {"id": "role_swap-01", "category": "role_swap", "cached": "why did france invade russia", "new": "why did russia invade france", "expected": "miss", "split": "heldout"}
 {"id": "role_swap-02", "category": "role_swap", "cached": "how does a dog differ from a wolf in diet", "new": "how does a wolf differ from a dog in diet", "expected": "miss", "split": "heldout"}
-{"id": "role_swap-03", "category": "role_swap", "cached": "who was taller, lincoln or douglas", "new": "who was taller, douglas or lincoln", "expected": "miss", "split": "heldout"}
-{"id": "role_swap-04", "category": "role_swap", "cached": "how to hire a lawyer as a landlord", "new": "how to hire a lawyer as a tenant", "expected": "miss", "split": "heldout"}
-{"id": "role_swap-05", "category": "role_swap", "cached": "what does the doctor owe the patient", "new": "what does the patient owe the doctor", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-03", "category": "role_swap", "cached": "how to hire a lawyer as a landlord", "new": "how to hire a lawyer as a tenant", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-04", "category": "role_swap", "cached": "what does the doctor owe the patient", "new": "what does the patient owe the doctor", "expected": "miss", "split": "heldout"}
 {"id": "language_edge-00", "category": "language_edge", "cached": "how to write a function in c", "new": "how to write a function in c++", "expected": "miss", "split": "heldout"}
 {"id": "language_edge-01", "category": "language_edge", "cached": "python 2.7 string formatting", "new": "python 3.8 string formatting", "expected": "miss", "split": "heldout"}
 {"id": "language_edge-02", "category": "language_edge", "cached": "how do i use es5 classes", "new": "how do i use es6 classes", "expected": "miss", "split": "heldout"}
@@ -56,3 +55,4 @@
 {"id": "paraphrase_hard-09", "category": "paraphrase_hard", "cached": "what is machine learning", "new": "can you explain machine learning to me", "expected": "hit", "split": "heldout"}
 {"id": "paraphrase_hard-10", "category": "paraphrase_hard", "cached": "how do i make my resume stand out", "new": "ways to make my resume stand out", "expected": "hit", "split": "heldout"}
 {"id": "paraphrase_hard-11", "category": "paraphrase_hard", "cached": "how do i fix a leaking tap", "new": "my tap is leaking, how do i fix it", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-12", "category": "paraphrase_hard", "cached": "who was taller, lincoln or douglas", "new": "who was taller, douglas or lincoln", "expected": "hit", "split": "heldout"}

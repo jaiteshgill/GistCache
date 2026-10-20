@@ -19,6 +19,9 @@ verifier:
   hit_threshold: 0.90
   near_threshold: 0.70
   top_k: 5
+  strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
+  nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
+  contradiction_threshold: 0.5
 
 patcher:
   enabled: true
@@ -29,6 +32,8 @@ cache:
   path: ./data/gistcache.db
   max_entries: 100000
   default_ttl_seconds: null
+  volatility_check: false      # ask the small model once per stored answer if it goes stale; validate with
+                               # `python -m eval.volatility` before enabling
 
 bypass:
   max_temperature: 0.7
