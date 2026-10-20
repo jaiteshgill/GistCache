@@ -23,7 +23,8 @@ verifier:
   strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
   nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
   contradiction_threshold: 0.5
-  borderline_judge: false      # EXPERIMENTAL: ask the small model about unsure pairs (see README); validate first
+  borderline_judge: true       # second opinion on unsure pairs. Validated on small samples (see README):
+                               # recovered 8/8 band paraphrases, 0/1 near-miss passed; stress test 0/24 near-misses passed
   borderline_low: 0.3          # lowest cross-encoder score that is still worth asking about
 
 patcher:
