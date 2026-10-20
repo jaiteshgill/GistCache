@@ -28,9 +28,14 @@ def parse(text: str) -> dict | None:
     return d if all(isinstance(d.get(k), str) and d[k].strip() for k in ("paraphrase", "patchable", "critical")) else None
 
 
+# Generous on purpose: the model can spend part of the budget on hidden reasoning, and 400 tokens cut off the JSON
+# for longer prompts, silently dropping 43 of 150 real seeds (mean 112 chars vs 61 for those kept).
+MAX_TOKENS = 1500
+
+
 def _one(small, seed: str) -> dict | None:
     for _ in range(2):  # one retry on malformed output
-        d = parse(small.complete([{"role": "user", "content": PROMPT.format(seed=seed)}], max_tokens=400).text)
+        d = parse(small.complete([{"role": "user", "content": PROMPT.format(seed=seed)}], max_tokens=MAX_TOKENS).text)
         if d:
             return d
     return None

@@ -98,3 +98,17 @@ def test_a_failing_query_is_skipped_not_fatal(monkeypatch, tmp_path):
     md = (tmp_path / "results" / "pilot_dry.md").read_text()
     assert "requests failed after retries and were skipped" in md
     assert "| seed | 3 |" in md and "| critical |" not in md  # the run finished; the failed queries are excluded
+
+
+def test_variant_generation_gives_the_model_room():
+    from eval import variants
+    seen = {}
+
+    class P:
+        def complete(self, messages, **params):
+            seen.update(params)
+            from gistcache.providers import Completion
+            return Completion('{"paraphrase":"a","patchable":"b","critical":"c"}')
+
+    assert variants._one(P(), "seed") == {"paraphrase": "a", "patchable": "b", "critical": "c"}
+    assert seen["max_tokens"] >= 1000

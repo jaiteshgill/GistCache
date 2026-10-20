@@ -205,6 +205,8 @@ def main():
     variants = generate(small, seeds, HERE / "data" / vname, a.workers)
     queries = build_queries(variants, rng)
     print(f"{len(variants)} seeds -> {len(queries)} queries; variants cost so far ${tracker.total:.4f}")
+    if len(variants) < len(seeds):
+        print(f"WARNING: {len(seeds) - len(variants)} of {len(seeds)} seeds got no usable variants and are excluded")
 
     rows, stopped, failed = [], False, []
     for i, q in enumerate(queries):
@@ -273,6 +275,8 @@ def main():
     md = report(rows, base_rows, tracker, mean_large, large.latencies(), stopped, n_unjudged, title, redact)
     if failed:
         md += f"\n{len(failed)} requests failed after retries and were skipped.\n"
+    if len(variants) < len(seeds):
+        md += f"\n{len(seeds) - len(variants)} of {len(seeds)} seeds got no usable variants and were excluded.\n"
     (out_dir / f"{name}.md").write_text(md)
     if redact:
         (out_dir / f"{name}.local.md").write_text(report(rows, base_rows, tracker, mean_large, large.latencies(),
