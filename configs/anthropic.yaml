@@ -1,0 +1,45 @@
+# Anthropic setup: mid-tier model for misses, small model for patching.
+# export ANTHROPIC_API_KEY=sk-ant-...
+# gistcache --config configs/anthropic.yaml serve --port 8100
+providers:
+  large:
+    kind: anthropic
+    model: claude-sonnet-5-5
+    api_key_env: ANTHROPIC_API_KEY
+  small:
+    kind: anthropic
+    model: claude-haiku-5-5
+    api_key_env: ANTHROPIC_API_KEY
+
+embedder:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  device: cpu
+
+verifier:
+  cross_encoder: cross-encoder/quora-distilroberta-base
+  hit_threshold: 0.90
+  near_threshold: 0.70
+  top_k: 5
+
+patcher:
+  enabled: true
+  max_length_ratio: 1.5
+  cache_patched_answers: false
+
+cache:
+  path: ./data/gistcache.db
+  max_entries: 100000
+  default_ttl_seconds: null
+
+bypass:
+  max_temperature: 0.7
+  with_tools: true
+
+multi_turn:
+  context_turns: 4
+
+# USD per 1M tokens. Copy current rates from anthropic.com/pricing;
+# left at 0 so cost numbers are never silently wrong.
+pricing:
+  large: { input: 0.0, output: 0.0 }
+  small: { input: 0.0, output: 0.0 }
