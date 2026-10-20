@@ -1,6 +1,8 @@
 import time
 import uuid
 
+import httpx
+
 from fastapi import FastAPI, Header, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -42,8 +44,13 @@ def create_app(pipeline: Pipeline) -> FastAPI:
         messages = body.pop("messages")
         has_tools = bool(body.pop("tools", None) or body.pop("functions", None))
         temperature = body.pop("temperature", None)
-        r = pipeline.handle(messages, scope=x_gistcache_scope, bypass=x_gistcache_bypass.lower() == "true",
-                            temperature=temperature, has_tools=has_tools, **body)
+        try:
+            r = pipeline.handle(messages, scope=x_gistcache_scope, bypass=x_gistcache_bypass.lower() == "true",
+                                temperature=temperature, has_tools=has_tools, **body)
+        except httpx.HTTPStatusError as e:
+            return JSONResponse({"error": {"message": f"upstream provider returned {e.response.status_code}: "
+                                                      f"{e.response.text[:300]}", "type": "upstream_error"}},
+                                status_code=502)
         headers = {"X-GistCache-Tier": r.tier, "X-GistCache-Reason": r.reason,
                    "X-GistCache-Fallback": str(r.fallback).lower()}
         if r.source:

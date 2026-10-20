@@ -22,7 +22,7 @@ def patch(provider: Provider, old_q: str, answer: str, new_q: str, diffs: list, 
     """Return (patched text or None if rejected, raw completion for cost accounting)."""
     prompt = PROMPT.format(cp=CANNOT_PATCH, old_q=old_q, answer=answer, new_q=new_q,
                            diffs="; ".join(str(d) for d in diffs))
-    c = provider.complete([{"role": "user", "content": prompt}], temperature=0)
+    c = provider.complete([{"role": "user", "content": prompt}])
     return (validate(c.text, answer, new_q, max_ratio), c)
 
 

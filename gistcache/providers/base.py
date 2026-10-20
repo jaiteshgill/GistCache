@@ -36,8 +36,10 @@ class OpenAICompatible:
 
 
 class Anthropic:
-    def __init__(self, model: str, api_key: str, base_url: str = "https://api.anthropic.com"):
+    def __init__(self, model: str, api_key: str, base_url: str = "https://api.anthropic.com",
+                 workspace_id: str = ""):
         self.model, self.api_key, self.base_url = model, api_key, base_url.rstrip("/")
+        self.workspace_id = workspace_id
 
     def complete(self, messages, **params) -> Completion:
         system = "\n".join(m["content"] for m in messages if m["role"] == "system")
@@ -47,8 +49,10 @@ class Anthropic:
             body["system"] = system
         if "temperature" in params:
             body["temperature"] = params["temperature"]
-        r = httpx.post(f"{self.base_url}/v1/messages", timeout=120, json=body,
-                       headers={"x-api-key": self.api_key, "anthropic-version": "2023-06-01"})
+        headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"}
+        if self.workspace_id:
+            headers["anthropic-workspace-id"] = self.workspace_id
+        r = httpx.post(f"{self.base_url}/v1/messages", timeout=120, json=body, headers=headers)
         r.raise_for_status()
         d = r.json()
         return Completion("".join(b.get("text", "") for b in d["content"]),
@@ -59,6 +63,7 @@ def build_provider(cfg: dict) -> Provider:
     kind = cfg["kind"]
     key = os.environ.get(cfg.get("api_key_env", ""), "")
     if kind == "anthropic":
-        return Anthropic(cfg["model"], key, cfg.get("base_url", "https://api.anthropic.com"))
+        ws = os.environ.get(cfg.get("workspace_id_env", "ANTHROPIC_WORKSPACE_ID"), "")
+        return Anthropic(cfg["model"], key, cfg.get("base_url", "https://api.anthropic.com"), ws)
     default = {"openai": "https://api.openai.com/v1", "ollama": "http://localhost:11434/v1"}.get(kind, "")
     return OpenAICompatible(cfg["model"], cfg.get("base_url", default), key)
