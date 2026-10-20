@@ -4,7 +4,7 @@
 
 GistCache sits between your application and an LLM provider. It answers repeated questions from cache, adapts cached answers to slightly different questions with a small model and sends everything else to the large model. A verifier decides which path each request takes and falls back to the large model whenever reuse is not safe.
 
-> **Status:** in development. The core pipeline, verifier and evaluation harness are implemented and tested. The numbers under [Preliminary results](#preliminary-results) come from small pilots (hundreds of pairs and 96 queries) and are indicative only. The full-evaluation tables below remain placeholders.
+> **Status:** v1 complete. Evaluated on 596 queries built from real LLM-user prompts (LMSYS-Chat-1M) against a standard threshold cache: GistCache gave **14 to 21 times fewer wrong answers** (1.8 per 100 requests against 26 and 38), at the cost of reusing fewer answers (18% cost saving). See [Results](#results), including what did not go well.
 
 ---
 
@@ -418,17 +418,17 @@ The evaluation answers three questions:
 2. Are cached and patched answers actually correct for the new query?
 3. Is the system cheaper and faster end to end, after counting every overhead?
 
-> **What exists today.** Questions 1 to 3 have a first, small answer: hand-written labelled pairs (`eval/run.py`), and an end-to-end pilot with a hard spend cap, labelled variants and an LLM judge (`eval/stream.py`). See [Running the evaluation](#running-the-evaluation) for the real commands and [Preliminary results](#preliminary-results) for what they showed. The rest of this section describes the **planned full evaluation**: LMSYS seeds, Quora pairs, a threshold-cache baseline run on the same stream, a stronger independent judge, a human-reviewed sample and confidence intervals. None of that has been run.
+> **What has been run.** Hand-written labelled pairs (`eval/run.py`), pilots on hand-written seeds, and one evaluation on 596 queries from real LMSYS-Chat-1M prompts with a threshold-cache baseline and an LLM judge (`eval/stream.py`); see [Results](#results). Not yet run: Quora pairs, a stronger independent judge, a human-reviewed sample with Cohen's kappa, and bootstrap confidence intervals. Sections marked *planned* describe those.
 
-### Datasets (planned)
+### Datasets
 
 | Dataset | Used for |
 |---|---|
-| **Quora Question Pairs** | Verifier accuracy only. It has labelled duplicate pairs, which tests duplicate detection. It cannot tell us whether reused answers are correct. |
-| **LMSYS-Chat-1M** | Realistic prompts used as seeds for the main evaluation. Access requires accepting its license on Hugging Face. |
+| **Quora Question Pairs** (planned) | Verifier accuracy only. It has labelled duplicate pairs, which tests duplicate detection. It cannot tell us whether reused answers are correct. |
+| **LMSYS-Chat-1M** (used) | Realistic prompts used as seeds for the main evaluation. Access requires accepting its license on Hugging Face. |
 | **Hard test set** | Hand-written and generated pairs targeting known failure cases (below). |
 
-### Building the main query stream (planned; the pilot uses 40 hand-written seeds instead of LMSYS)
+### Building the main query stream (run with 150 seeds instead of 300)
 
 1. **Select seeds.** Sample about 300 single-turn English prompts from LMSYS-Chat-1M. Drop prompts flagged by the dataset's moderation fields, prompts with personal data, very short or very long prompts and near-duplicates of each other.
 2. **Generate variants.** For each seed, generate labelled variants:
@@ -523,9 +523,35 @@ python -m eval.patcher_check --live --cap 0.08                            # patc
 
 ## Results
 
-### Preliminary results
+### Evaluation on real prompts (LMSYS-Chat-1M)
 
-These are small, hand-built pilots. They are not the full evaluation and should not be quoted as final.
+**Setup.** 150 real single-turn prompts sampled from LMSYS-Chat-1M after filtering (see [Running the evaluation](#running-the-evaluation)); 149 got usable variants. Each seed plus a Claude-generated paraphrase, patchable change and critical change gives 596 queries in one stream, with every seed asked before its variants. GistCache and a plain cosine-threshold cache at 0.80 and 0.90 ran on exactly the same stream and saw identical large-model answers, and every reused answer from every system was judged against a large-model reference. Sonnet 5.5 as the large model, Haiku 5.5 as the small model and judge, answers capped at 300 tokens, one run, $1.83 in API calls. The published report is [`eval/results/eval_lmsys.md`](eval/results/eval_lmsys.md); prompt text is omitted because the dataset may not be redistributed.
+
+| System | Large model avoided | Reused answers judged acceptable | Wrongly reused | Cost / 1k requests | p50 latency | p95 latency |
+|---|---|---|---|---|---|---|
+| No cache | 0% | n/a | 0 | $2.86 | 3.19 s | 4.48 s |
+| Threshold cache (cosine >= 0.80) | 61% | 131 / 360 (36%) | 229 (38.4 per 100 requests) | $1.13 | 0.01 s | 4.08 s |
+| Threshold cache (cosine >= 0.90) | 41% | 87 / 242 (36%) | 155 (26.0 per 100 requests) | $1.70 | 2.69 s | 5.87 s |
+| **GistCache** | **22%** | **117 / 128 (91%)** | **11 (1.8 per 100 requests)** | $2.34 | 3.76 s | 6.55 s |
+
+| GistCache tier | Share of requests | Judged acceptable | Mean latency | Mean cost |
+|---|---|---|---|---|
+| Hit | 8.7% | 46 / 51 | 0.51 s | $0.00002 |
+| Near-hit (served) | 13.1% | 71 / 77 | 2.54 s | $0.00027 |
+| Near-hit (fell back to the large model) | 5.7% | n/a | 7.03 s | $0.00313 |
+| Miss | 72.5% | n/a | 4.10 s | $0.00293 |
+
+What this shows:
+
+- **The main claim holds: far fewer wrong answers.** Both threshold caches reused a lot, but only about a third of what they reused was acceptable. They served a cached answer for 103 (at 0.80) and 73 (at 0.90) of the 149 critical variants: negations, swapped entities, changed numbers. GistCache reused less, but 91% of what it reused was acceptable, giving 14 to 21 times fewer wrong answers per request.
+- **GistCache's 11 rejected reuses, reviewed by hand:** 2 genuine wrong-question reuses (several real prompts follow one template for different plant species, and lowercase Latin names escape the entity rule), 2 near-hit adaptations that dropped content, and about 7 judge or reference disagreements rather than cache errors (subjective or ambiguous questions, two large-model answers disagreeing on a multiple-choice question, answers cut off at 300 tokens, a cut-off judge reply). All 11 are counted as wrong anyway.
+- **Savings are modest.** 22% of requests avoided the large model and cost fell 18%. At most half of this stream could ever be reused correctly (a quarter are first sightings and a quarter are critical changes); of the 298 paraphrases and patchable changes, GistCache reused 129 (43%). Most of the rest were lost to rules that are too strict on real text (the number rule stopped 50 and the entity rule 35, often because a generated paraphrase reworded a number or name) and to 31 patcher refusals. These are safe failures: they cost savings, not correctness.
+- **Latency is worse than no cache at the median.** Hits take 0.5 s, but 78% of requests are misses, and each miss also pays for the local verifier models and for the volatility check, a small-model call made before responding. That puts the median at 3.76 s against 3.19 s. Moving the volatility check off the request path is the obvious fix and has not been done yet.
+- **How much to trust this:** one run, 596 queries from 149 seeds, variants generated by a model, a judge from the same model family as the patcher, and no confidence intervals. The comparison is fair because every system faced the same stream, answers and judge, but the exact numbers would move on another sample.
+
+### Earlier pilots and verifier tests
+
+These came before the real-prompt evaluation and drove most of the design. They are small and hand-built.
 
 **Verifier on hand-written pairs** (`python -m eval.run --file <set>.jsonl --split all`; real embedder, cross-encoder and NLI guard). "Wrongly reused" counts pairs where GistCache served more than the expected tier.
 
@@ -553,39 +579,6 @@ The fresh set is the honest figure. Before the contradiction guard it was 50/69 
 - **Patcher prompt A/B** (`python -m eval.patcher_check`, run twice; 12 near-hit cases from the pilot plus 8 synthetic controls; the small model grades each patched output for format and added facts): v2 patched 10 and 11 of the 12 real cases against 10 and 9 for v1, met the requested format in 21 of 21 patched outputs against 15 of 19 for v1, and added no facts in either prompt. Both prompts correctly refused all four synthetic cases that need content the cached answer lacks. v1 itself varied between runs (refusing 2, then 3 real cases, against 5 in the pilot), so differences of one or two cases are noise; the format difference is the consistent signal. The A/B also exposed that the length check, not the model, was rejecting correct reformatting of short answers, which is fixed above. Small sample, graded by the same model family.
 - **A close call:** in run 2 a critical variant ("a cowardly rabbit") reached a near-hit attempt against a cached "brave rabbit" answer, because a harmless wording difference ("short" vs "brief") explained the pair and nothing checked the swapped word. Only the patcher's refusal stopped it. The verifier now sends any near-hit with a hidden content swap through the contradiction guard (`content_substituted`), and the real pair is vetoed with a contradiction score of 1.00. The pilot has not been rerun since this fix.
 - **Caveats:** small sample; seeds written by hand; variants and judge both from the Claude family; answers truncated at 300 tokens; two runs only.
-
-### Full evaluation (placeholders)
-
-> These tables are for the planned full evaluation. They are empty on purpose: no number below is real yet.
-
-### End to end
-
-| System | Large model avoided | Quality pass rate | False-hit rate | Cost / 1k req | p50 latency | p95 latency |
-|---|---|---|---|---|---|---|
-| No cache | 0% | TBD | n/a | TBD | TBD | TBD |
-| Threshold cache | TBD | TBD | TBD | TBD | TBD | TBD |
-| **GistCache** | TBD | TBD | TBD | TBD | TBD | TBD |
-
-### Per tier (GistCache)
-
-| Tier | Share of requests | Quality pass rate | Mean latency | Mean cost |
-|---|---|---|---|---|
-| Hit | TBD | TBD | TBD | TBD |
-| Near-hit (served) | TBD | TBD | TBD | TBD |
-| Near-hit (fell back) | TBD | TBD | TBD | TBD |
-| Miss | TBD | TBD | TBD | TBD |
-
-### Verifier on the hard test set
-
-| Category | Threshold cache correct | GistCache correct |
-|---|---|---|
-| Negation | TBD | TBD |
-| Changed numbers | TBD | TBD |
-| Programming language | TBD | TBD |
-| Direction | TBD | TBD |
-| Output format | TBD | TBD |
-| Sort order | TBD | TBD |
-| Time-sensitive | TBD | TBD |
 
 ## Cost of running the evaluation
 
@@ -700,12 +693,17 @@ A model call on every candidate would add cost and latency to every hit. The cro
 - **Single node.** SQLite and in-process numpy search run on one machine. A shared deployment would need a networked store and vector index.
 - **Rule vocabularies.** The antonym lexicon, constraint phrases and volatile-topic patterns are finite word lists. The contradiction guard and the second opinion exist because of that, but they are themselves models and can be wrong.
 - **Small samples.** Every number in this README comes from at most a few hundred hand-built pairs or 96 pilot queries, written by the same author as the rules, with variants and judge from the same model family.
+- **Latency on misses.** Every miss pays for the local verifier models and a synchronous volatility check, so the median request was slower than with no cache in the LMSYS evaluation.
+- **Recall on real text.** The number and entity rules are conservative and blocked many safe reuses of real-user paraphrases; GistCache reused 43% of the reusable queries.
+- **Judge noise.** Several rejected reuses were judge or reference disagreements on subjective or ambiguous questions, and answers were capped at 300 tokens. The same judge was applied to every system.
 - **Patcher behaviour.** Near-hits save cost but little time, the small model sometimes refuses reformatting requests, and its output varies between runs.
 - **Entities.** There is no NER model; entity swaps rely on a capitalization heuristic and the model-based layers.
 
 ## Roadmap
 
 - [ ] Full evaluation on LMSYS-Chat-1M prompts with a threshold-cache baseline, an independent judge and confidence intervals
+- [ ] Move the volatility check off the request path (store answers in the background)
+- [ ] Fewer rule false positives on real text (number and entity rules), measured on a fresh real-prompt sample
 - [ ] Faster near-hits (edit-based patching instead of rewriting the whole answer)
 - [ ] NER for entities
 - [ ] FAISS or pgvector index for large caches
