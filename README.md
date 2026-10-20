@@ -160,6 +160,8 @@ Evaluation on fresh data showed that rule lists and a duplicate-detection cross-
 - **Contradiction guard** (`verifier.nli_guard`). An NLI model checks whether the two queries contradict each other and vetoes the reuse if so. It runs on hits, and on near-hits that exist only because of the content net. Rules cannot list every antonym ("attract / repel"); a contradiction model generalizes. Used as an equivalence check NLI performed poorly, so the guard only vetoes.
 - **Volatility check** (`cache.volatility_check`). When a large-model answer is about to be stored, the small model is asked once whether the correct answer changes over time (prices, scores, office-holders, "is it open"). If so, the answer is not cached. No similarity check can detect this, because "is it raining in Vancouver?" does not contradict itself.
 
+- **Borderline second opinion** (`verifier.borderline_judge`, experimental, off by default). The cross-encoder rejects many true paraphrases in the middle of its score range. For pairs that no rule objects to, the contradiction guard clears, and whose score falls between `borderline_low` and `hit_threshold`, the small model is asked whether one answer would serve both queries. A YES promotes the pair to a hit; the guard still has the last word. The free local checks run first, so a vetoed pair costs no API call. `python -m eval.borderline` lists the pairs that would be asked (free) and, with `--live`, measures how many true paraphrases it recovers and how many wrong pairs it lets through. It is not enabled anywhere until that has been measured.
+
 Rule improvements made after testing on real LLM-written text: negation words are treated as one signal (`no`, `not`, `non-`, `without`), prefix negation and an antonym lexicon are checked, spelled-out numbers and ordinals count as numbers, possessives are stripped ("Java's"), sentence-initial capitals are not entities, `go`/`c`/`r` count as languages only in a language context, "A and B" / "A or B" comparisons are symmetric, direction swaps require shared vocabulary, and "weather" is time-sensitive only when asking about conditions.
 
 ## The near-hit tier
@@ -319,6 +321,8 @@ verifier:
   strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
   nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
   contradiction_threshold: 0.5
+  borderline_judge: false   # experimental second opinion on unsure pairs
+  borderline_low: 0.3
   rules:
     negation: true
     direction: true
@@ -574,6 +578,7 @@ gistcache/
 │   │   ├── rules.py         # negation, numbers, entities, direction, versions, time
 │   │   ├── cross.py         # cross-encoder scoring
 │   │   ├── guard.py         # NLI contradiction guard
+│   │   ├── borderline.py    # small-model second opinion on unsure pairs
 │   │   └── policy.py        # tier decision and reasons
 │   ├── patcher.py           # near-hit adaptation and validation
 │   ├── providers/
@@ -587,6 +592,7 @@ gistcache/
 │   ├── judge.py             # LLM judge for reused answers
 │   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies
 │   ├── volatility.py        # validates the volatility check against a real model
+│   ├── borderline.py        # lists / measures the borderline second opinion
 │   ├── spend.py             # spend tracking and cap
 │   ├── pin.py               # (re)generate pinned.json, the regression pins
 │   ├── pinned.json          # pinned rule differences and tiers for every eval pair

@@ -10,6 +10,7 @@ from .cost import cost_usd
 from .index import top_k
 from .normalize import normalize
 from .store import Store
+from .verifier.borderline import same_answer
 from .verifier.cross import CosineScorer, Scorer
 from .verifier.guard import Guard
 from .verifier.policy import HIT, MISS, NEAR_HIT, Decision, decide, needs_guard
@@ -62,6 +63,7 @@ class Pipeline:
         unresolved = bool(prior) is False and has_unresolved_reference(query) and len(query.split()) < 8
 
         decision, cand, cos = Decision(MISS, "miss: no candidates"), None, None
+        judge_cost = 0.0
         qvec = None
         if time_sensitive:
             decision = Decision(MISS, "miss: time-sensitive")
@@ -79,6 +81,15 @@ class Pipeline:
                 diffs = extract_differences(e.query, query, cfg["verifier"].get("strict_content_check", True))
                 d = decide(diffs, self.scorer.score(e.query, query, c),
                            cfg["verifier"]["hit_threshold"], cfg["verifier"]["near_threshold"], cosine=c)
+                if self._borderline(d, c):
+                    contra = self.guard.contradiction(e.query, query) if self.guard else 0.0
+                    if contra >= cfg["verifier"].get("contradiction_threshold", 0.5):
+                        d = Decision(MISS, f"miss: contradiction ({contra:.2f})", d.score, d.differences)  # free check first
+                    else:
+                        ok, comp = same_answer(self.small, e.query, query)
+                        judge_cost += cost_usd(pricing, "small", comp.in_tokens, comp.out_tokens)
+                        if ok:
+                            d = Decision(HIT, "hit: confirmed by judge", d.score, [])
                 if self.guard and needs_guard(d):
                     contra = self.guard.contradiction(e.query, query)
                     if contra >= cfg["verifier"].get("contradiction_threshold", 0.5):
@@ -89,11 +100,11 @@ class Pipeline:
             if best:
                 _, decision, cand, cos = best
 
-        cost, fell_back = 0.0, False
+        cost, fell_back = judge_cost, False
         if decision.tier == HIT and cand:
             self.store.touch(cand.id)
             return self._finish(scope, query, HIT, decision.reason, cand.answer, cand.id, cos, decision.score,
-                                decision.differences, False, 0.0, t0)
+                                decision.differences, False, judge_cost, t0)
 
         if decision.tier == NEAR_HIT and cand and self.small and cfg["patcher"]["enabled"]:
             patched, c = patcher.patch(self.small, cand.query, cand.answer, query, decision.differences,
@@ -123,6 +134,12 @@ class Pipeline:
             self._store(scope, ctx, query, c.text, self.large.model, qvec)
         return self._finish(scope, query, MISS, decision.reason, c.text, cand.id if fell_back and cand else None,
                             cos, decision.score, decision.differences, fell_back, cost, t0)
+
+    def _borderline(self, d: Decision, cosine: float) -> bool:
+        """A pair the scorer is unsure about and no rule objects to: worth one small-model opinion."""
+        v = self.cfg["verifier"]
+        return bool(v.get("borderline_judge") and self.small and d.tier == MISS and not d.differences
+                    and cosine >= v["near_threshold"] and v.get("borderline_low", 0.3) <= d.score < v["hit_threshold"])
 
     def _is_volatile(self, query: str) -> tuple[bool, float]:
         """Ask the small model whether the correct answer changes over time. Runs once per stored answer."""

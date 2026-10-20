@@ -142,3 +142,59 @@ def test_guard_covers_near_hits_that_only_the_content_net_explains():
     ask(p, "how do I structure an essay with a strong thesis")
     r = ask(p, "how do I structure an essay with a weak thesis nobody reads")  # added content, no rule explains it
     assert r.tier == "miss" and "contradiction" in r.reason
+
+
+# --- borderline-hit second opinion ------------------------------------------------------------
+def borderline(reply, **v):
+    p, large, small = make(small_reply=reply)
+    p.cfg["verifier"].update(hit_threshold=0.9, borderline_judge=True, **v)  # "change" vs "reset" scores ~0.83
+    return p, large, small
+
+
+def test_borderline_judge_yes_promotes_to_hit_and_counts_cost():
+    p, large, small = borderline("YES\nSame question.")
+    p.cfg["pricing"] = {"small": {"input": 1000.0, "output": 1000.0}}
+    ask(p, "how do i reset my password")
+    r = ask(p, "how do i change my password")
+    assert r.tier == "hit" and r.reason == "hit: confirmed by judge"
+    assert large.calls == 1 and small.calls == 1 and r.cost_usd > 0
+
+
+def test_borderline_judge_no_stays_a_miss():
+    p, large, small = borderline("NO\nDifferent action.")
+    ask(p, "how do i reset my password")
+    r = ask(p, "how do i change my password")
+    assert r.tier == "miss" and large.calls == 2 and small.calls == 1
+
+
+def test_borderline_judge_is_off_by_default():
+    p, large, small = make(small_reply="YES")
+    p.cfg["verifier"]["hit_threshold"] = 0.9
+    ask(p, "how do i reset my password")
+    assert ask(p, "how do i change my password").tier == "miss" and small.calls == 0
+
+
+def test_borderline_judge_never_overrides_a_rule():
+    p, large, small = borderline("YES")
+    ask(p, "should i cancel my order please")
+    assert ask(p, "should i not cancel my order please").tier == "miss" and small.calls == 0
+
+
+def test_borderline_judge_skips_unrelated_queries():
+    p, large, small = borderline("YES")
+    ask(p, "how do i reset my password")
+    assert ask(p, "what is the capital of france").tier == "miss" and small.calls == 0
+
+
+def test_contradiction_guard_still_vetoes_a_judge_promoted_hit():
+    p, large, small = borderline("YES")
+    p.guard = FakeGuard(0.99)
+    ask(p, "how do i reset my password")
+    r = ask(p, "how do i change my password")
+    assert r.tier == "miss" and "contradiction" in r.reason
+    assert small.calls == 0  # the free local check runs first, so no paid judge call is wasted
+
+
+def test_borderline_verdict_parsing():
+    from gistcache.verifier.borderline import parse
+    assert parse("YES. same") and parse("**YES**") and not parse("NO. differs") and not parse("") and not parse("unsure")
