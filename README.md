@@ -74,7 +74,7 @@ flowchart LR
     Proxy --> Norm[Normalizer and context fingerprint]
     Norm --> Embed[Embedder]
     Embed --> ANN[Vector index: top-k candidates]
-    ANN --> Verifier{Verifier}
+    ANN --> Verifier{"Verifier: rules, cross-encoder,<br/>contradiction guard, second opinion"}
     Verifier -->|hit| Cache[(Cache store)]
     Verifier -->|near-hit| Patcher[Small model patcher]
     Verifier -->|miss| Large[Large model]
@@ -90,8 +90,8 @@ flowchart LR
 |---|---|---|
 | Proxy | FastAPI | Exposes an OpenAI-compatible `/v1/chat/completions` endpoint |
 | Embedder | `all-MiniLM-L6-v2` (local) | Turns queries into vectors |
-| Vector index | FAISS (in memory, persisted to disk) | Finds the top-k most similar cached queries |
-| Verifier | Rule checks plus a local cross-encoder | Classifies each candidate as hit, near-hit or miss |
+| Vector index | Exact cosine search (numpy) over embeddings stored in SQLite | Finds the top-k most similar cached queries |
+| Verifier | Rule checks, a local cross-encoder, a local NLI contradiction guard and an optional small-model second opinion | Classifies each candidate as hit, near-hit or miss |
 | Patcher | Configurable small model | Adapts a cached answer to the new query or refuses |
 | Large model | Configurable large model | Answers misses and fallbacks |
 | Store | SQLite | Holds entries, metadata and the decision log |
@@ -101,16 +101,16 @@ The embedder and cross-encoder run locally, so they add latency but no API cost.
 ## Request lifecycle
 
 1. **Receive.** The application sends a normal chat completion request to GistCache.
-2. **Bypass check.** Requests with tool definitions, a high temperature, an `X-GistCache-Bypass: true` header or a disabled scope go straight to the large model.
+2. **Bypass check.** Requests with tool definitions, a high temperature, an `X-GistCache-Bypass: true` header go straight to the large model.
 3. **Normalize.** Lowercase, collapse whitespace and strip boilerplate. The original text is kept for the verifier.
 4. **Fingerprint context.** For multi-turn requests, build a context key from recent turns (see [Multi-turn conversations](#multi-turn-conversations)).
 5. **Retrieve.** Embed the query and fetch the top-k candidates (default k = 5) within the same scope and context key.
-6. **Verify.** Run rule checks and the cross-encoder on each candidate. Pick the best candidate and a tier.
+6. **Verify.** Run the rule checks, the cross-encoder and the safety layers (see [The verifier](#the-verifier)) on each candidate. Pick the best candidate and a tier.
 7. **Serve.**
    - Hit: return the cached answer.
    - Near-hit: call the patcher. If it returns `CANNOT_PATCH` or fails validation, fall back to the large model.
    - Miss: call the large model.
-8. **Store.** Cache every large model answer. Patched answers are not cached by default so errors cannot compound.
+8. **Store.** Cache every large model answer, unless it is time-sensitive or the optional volatility check says it goes stale. Patched answers are not cached by default so errors cannot compound.
 9. **Log.** Record the tier, the reason, the candidate used, scores, latency and cost.
 
 ## The verifier
@@ -134,7 +134,7 @@ Fast deterministic checks on the original text of both queries.
 | Verbosity or tone | briefly, explain like I'm five | Patchable |
 | Narrowing constraint | add comments, use type hints | Patchable |
 
-Entities are extracted with a lightweight NER model. Numbers, negations, directional words and time-sensitive terms use curated patterns.
+Numbers, negations, directional words, languages and time-sensitive terms use curated patterns. Entities are detected with a heuristic (capitalized words that do not start a sentence) plus a comparison of the remaining content words; there is no NER model yet. Lowercase entity swaps ("best laptop for students" vs "for gamers") are therefore caught by the cross-encoder, the contradiction guard and the second opinion, not by a rule.
 
 ### Stage 2: semantic scoring (cross-encoder)
 
@@ -150,17 +150,18 @@ elif only patchable differences and score >= near_threshold:
 else:                                                -> MISS
 ```
 
-Every decision carries a reason string such as `miss: negation mismatch` or `near_hit: sort direction`. Thresholds are tuned on a held-out split of the evaluation data, never on the test split.
+Near-hits are gated on cosine similarity, not on the cross-encoder score: the cross-encoder is trained to detect duplicate questions, so it correctly scores "sort ascending" against "sort descending" near zero, and the rules have already explained that difference. The cross-encoder score gates hits only.
+
+Every decision carries a reason string such as `miss: negation mismatch` or `near_hit: sort order`. The defaults are `hit_threshold` 0.90 and `near_threshold` 0.70. A sweep of the hit threshold from 0.6 to 0.9 on the development pairs was flat, so there is no evidence for moving them; they have not been tuned on any test split.
 
 ### Additional safety layers
 
-Evaluation on fresh data showed that rule lists and a duplicate-detection cross-encoder miss unseen antonyms, same-slot entity swaps and volatile topics. Three layers were added:
+Evaluation on fresh data showed that rule lists and a duplicate-detection cross-encoder miss unseen antonyms, same-slot entity swaps and volatile topics. Four layers were added:
 
-- **Content safety net** (`verifier.strict_content_check`). If one query's content words are a strict subset of the other's, the extra words are content the cached answer was not written for. The pair is downgraded from hit to near-hit. It costs some hits and buys safety. Patchable phrases (format, order, verbosity, constraints) are removed before this comparison.
-- **Contradiction guard** (`verifier.nli_guard`). An NLI model checks whether the two queries contradict each other and vetoes the reuse if so. It runs on hits, and on near-hits that exist only because of the content net. Rules cannot list every antonym ("attract / repel"); a contradiction model generalizes. Used as an equivalence check NLI performed poorly, so the guard only vetoes.
-- **Volatility check** (`cache.volatility_check`). When a large-model answer is about to be stored, the small model is asked once whether the correct answer changes over time (prices, scores, office-holders, "is it open"). If so, the answer is not cached. No similarity check can detect this, because "is it raining in Vancouver?" does not contradict itself.
-
-- **Borderline second opinion** (`verifier.borderline_judge`, off by default, on in `configs/anthropic.yaml`). The cross-encoder rejects many true paraphrases in the middle of its score range. For pairs that no rule objects to, the contradiction guard clears, and whose score falls between `borderline_low` and `hit_threshold`, the small model is asked whether one answer would serve both queries. A YES promotes the pair to a hit; the guard still has the last word. The free local checks run first, so a vetoed pair costs no API call. `python -m eval.borderline` lists the pairs that would be asked (free) and, with `--live`, measures how many true paraphrases it recovers and how many wrong pairs it lets through. Measured with Claude Haiku 5.5 as the judge, on small samples: of the 9 pairs in the borderline band across the eval sets it recovered 8 of 8 true paraphrases and rejected the 1 near-miss ("headache" vs "migraine"); in a separate stress test (`python -m eval.borderline_stress`) it said NO to all 24 near-misses (different audience, platform, scope, entity or condition) and YES to 11 of 12 fresh paraphrases. The failure it did show is the safe kind (a lost hit). These are small samples written by the same author as the prompt, so treat them as encouraging, not conclusive.
+- **Content safety net** (`verifier.strict_content_check`). If one query's content words are a strict subset of the other's, the extra words are content the cached answer was not written for, so the pair is downgraded from hit to near-hit. A related mark, `content_substituted`, is added when a near-hit's patchable difference ("short" vs "brief") sits next to a swapped content word ("brave" vs "cowardly"), so the swap is not hidden behind the harmless difference. Patchable phrases (format, order, verbosity, constraints) are removed before these comparisons. The net costs some hits and buys safety.
+- **Contradiction guard** (`verifier.nli_guard`). An NLI model checks whether the two queries contradict each other and vetoes the reuse if so. It runs on hits, on near-hits that exist only because of the content net, and on near-hits with a hidden content swap. Rules cannot list every antonym ("attract / repel"); a contradiction model generalizes. Used as an equivalence check NLI performed poorly, so the guard only vetoes.
+- **Volatility check** (`cache.volatility_check`). When a large-model answer is about to be stored, the small model is asked once whether the correct answer changes over time (prices, scores, office-holders, "is it open"). If so, the answer is not cached. No similarity check can detect this, because "is it raining in Vancouver?" does not contradict itself. Measured with Claude Haiku 5.5: 14 of 14 volatile and 0 of 14 stable queries flagged (`python -m eval.volatility`).
+- **Borderline second opinion** (`verifier.borderline_judge`, off by default, on in `configs/anthropic.yaml`). The cross-encoder rejects many true paraphrases in the middle of its score range. For pairs that no rule objects to, the contradiction guard clears, and whose score falls between `borderline_low` and `hit_threshold`, the small model is asked whether one answer would serve both queries. A YES promotes the pair to a hit; the guard still has the last word, and the free local checks run first, so a vetoed pair costs no API call. Measured with Claude Haiku 5.5 on small samples: of the 9 pairs in the borderline band across the eval sets it recovered 8 of 8 true paraphrases and rejected the 1 near-miss ("headache" vs "migraine"); in a separate stress test (`python -m eval.borderline_stress`) it said NO to all 24 near-misses (different audience, platform, scope, entity or condition) and YES to 11 of 12 fresh paraphrases. The one failure was the safe kind (a lost hit). These samples are small and were written by the same author as the prompt, so treat them as encouraging, not conclusive. `python -m eval.borderline` lists, for free, the pairs that would be asked.
 
 Rule improvements made after testing on real LLM-written text: negation words are treated as one signal (`no`, `not`, `non-`, `without`), prefix negation and an antonym lexicon are checked, spelled-out numbers and ordinals count as numbers, possessives are stripped ("Java's"), sentence-initial capitals are not entities, `go`/`c`/`r` count as languages only in a language context, "A and B" / "A or B" comparisons are symmetric, direction swaps require shared vocabulary, and "weather" is time-sensitive only when asking about conditions.
 
@@ -193,7 +194,7 @@ Patching is only worth it if it is actually cheaper. The evaluation counts the f
 
 ## Cache store
 
-SQLite holds the entries. FAISS holds the vectors and maps back to entry IDs.
+SQLite holds the entries and their embeddings (as a float32 `BLOB`). Retrieval loads the candidates for the request's scope and context key and ranks them by exact cosine similarity, which is fine up to tens of thousands of entries. A vector index (FAISS or pgvector) is on the [roadmap](#roadmap).
 
 ```sql
 CREATE TABLE entries (
@@ -207,7 +208,8 @@ CREATE TABLE entries (
     created_at    INTEGER NOT NULL,
     expires_at    INTEGER,            -- NULL means no TTL
     hit_count     INTEGER DEFAULT 0,
-    last_hit_at   INTEGER
+    last_hit_at   INTEGER,
+    embedding     BLOB                -- float32 vector of the normalized query
 );
 
 CREATE TABLE decisions (
@@ -243,31 +245,34 @@ Single-turn requests have no context key and match only other single-turn entrie
 
 - **TTL.** Each entry can expire. The default is no TTL. Time-sensitive queries are never cached at all.
 - **Scope.** Every entry belongs to a scope (an app, tenant or user ID passed in a header). Lookups never cross scopes, so one user's cached answer can never reach another user.
-- **Model changes.** Entries record which model produced them. Changing the large model in config can invalidate older entries.
-- **Manual purge.** `gistcache purge --scope <name>` or `--older-than 7d`.
+- **Model changes.** Entries record which model produced them, but changing the large model does not invalidate older entries automatically yet. Use `gistcache purge` after switching models.
+- **Manual purge.** `gistcache purge --scope <name>` or `--older-than 7d` (units `s`, `m`, `h`, `d`).
 
 ## Quick start
 
 ### 1. Install
 
 ```bash
-git clone https://github.com/jaiteshgill/gistcache.git
-cd gistcache
+git clone https://github.com/jaiteshgill/GistCache.git
+cd GistCache
 python -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install -e ".[ml]"      # the [ml] extra adds the local embedder, cross-encoder and NLI guard (PyTorch)
 ```
+
+Without `[ml]` the proxy still starts, but falls back to a toy hash embedder and plain cosine similarity. That fallback is for tests and offline development, not for real use.
 
 ### 2. Configure
 
 ```bash
-cp config.example.yaml config.yaml
-export OPENAI_API_KEY=sk-...      # or ANTHROPIC_API_KEY, or use Ollama with no key
+cp config.example.yaml config.yaml   # or start from configs/anthropic.yaml or configs/ollama.yaml
+export OPENAI_API_KEY=sk-...         # or ANTHROPIC_API_KEY, or use Ollama with no key
+# Anthropic keys that are not tied to a workspace also need: export ANTHROPIC_WORKSPACE_ID=<id>
 ```
 
 ### 3. Run the proxy
 
 ```bash
-gistcache serve --config config.yaml --port 8100
+gistcache serve --config config.yaml --port 8100   # --config may also come first
 ```
 
 ### 4. Point your app at it
@@ -298,16 +303,20 @@ gistcache serve --config configs/ollama.yaml
 
 ## Configuration
 
+This is `config.example.yaml`. Every key shown is read by the code; there are no per-rule toggles.
+
 ```yaml
 providers:
   large:
     kind: openai            # openai | anthropic | ollama | openai_compatible
     model: your-large-model
     api_key_env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
   small:
     kind: openai
     model: your-small-model
     api_key_env: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1
 
 embedder:
   model: sentence-transformers/all-MiniLM-L6-v2
@@ -315,33 +324,27 @@ embedder:
 
 verifier:
   cross_encoder: cross-encoder/quora-distilroberta-base
-  hit_threshold: 0.90       # tuned on the dev split
+  hit_threshold: 0.90
   near_threshold: 0.70
   top_k: 5
   strict_content_check: true   # refuse a plain hit when one query adds/drops content no rule explains
   nli_guard: cross-encoder/nli-deberta-v3-small   # veto hits whose queries contradict each other
   contradiction_threshold: 0.5
-  borderline_judge: false   # experimental second opinion on unsure pairs
-  borderline_low: 0.3
-  rules:
-    negation: true
-    direction: true
-    entities: true
-    numbers: true
-    versions: true
-    time_sensitive: true
+  borderline_judge: false      # EXPERIMENTAL: ask the small model about unsure pairs (see README); validate first
+  borderline_low: 0.3          # lowest cross-encoder score that is still worth asking about
 
 patcher:
   enabled: true
   max_length_ratio: 1.5
   cache_patched_answers: false
+  prompt: v1                   # v1 = strict original; v2 = allows pure reformatting (validate with eval.patcher_check)
 
 cache:
   path: ./data/gistcache.db
-  index_path: ./data/index.faiss
   max_entries: 100000
   default_ttl_seconds: null
-  volatility_check: false   # ask the small model whether a stored answer goes stale
+  volatility_check: false      # ask the small model once per stored answer if it goes stale; validate with
+                               # `python -m eval.volatility` before enabling
 
 bypass:
   max_temperature: 0.7
@@ -350,12 +353,12 @@ bypass:
 multi_turn:
   context_turns: 4
 
-pricing:                     # USD per 1M tokens, used for cost accounting
+pricing:                     # USD per 1M tokens
   large: { input: 0.0, output: 0.0 }
   small: { input: 0.0, output: 0.0 }
 ```
 
-Fill in `pricing` with current rates from your provider so the cost numbers are accurate.
+Fill in `pricing` with current rates from your provider so the cost numbers are accurate. `configs/anthropic.yaml` already has Anthropic's rates (checked 2026-10-20) and `configs/ollama.yaml` is all zeros.
 
 ## API compatibility
 
@@ -372,7 +375,7 @@ Fill in `pricing` with current rates from your provider so the cost numbers are 
 | Header | Example |
 |---|---|
 | `X-GistCache-Tier` | `hit`, `near_hit`, `miss`, `bypass` |
-| `X-GistCache-Reason` | `near_hit: sort direction` |
+| `X-GistCache-Reason` | `near_hit: sort order` |
 | `X-GistCache-Source` | ID of the cached entry used |
 | `X-GistCache-Fallback` | `true` if a near-hit fell back to the large model |
 
@@ -391,6 +394,8 @@ Every decision is logged with its reason, so you can see exactly why a request w
 gistcache log --last 5
 ```
 
+Example output (illustrative values, not from a real run):
+
 ```
 TIME      TIER      REASON                       COS   XENC  MS    COST
 03:12:01  hit       paraphrase                   0.94  0.97  18    $0.0000
@@ -400,7 +405,7 @@ TIME      TIER      REASON                       COS   XENC  MS    COST
 03:12:30  miss      near_hit fallback: CANNOT_PATCH 0.88 0.74 2210 $0.0065
 ```
 
-`gistcache stats` summarizes tier counts, cost saved and latency percentiles over any time window.
+`gistcache stats` prints, for each tier, the request count, total cost and mean latency over the whole decision log.
 
 ## Evaluation methodology
 
@@ -409,7 +414,9 @@ The evaluation answers three questions:
 2. Are cached and patched answers actually correct for the new query?
 3. Is the system cheaper and faster end to end, after counting every overhead?
 
-### Datasets
+> **What exists today.** Questions 1 to 3 have a first, small answer: hand-written labelled pairs (`eval/run.py`), and an end-to-end pilot with a hard spend cap, labelled variants and an LLM judge (`eval/stream.py`). See [Running the evaluation](#running-the-evaluation) for the real commands and [Preliminary results](#preliminary-results) for what they showed. The rest of this section describes the **planned full evaluation**: LMSYS seeds, Quora pairs, a threshold-cache baseline run on the same stream, a stronger independent judge, a human-reviewed sample and confidence intervals. None of that has been run.
+
+### Datasets (planned)
 
 | Dataset | Used for |
 |---|---|
@@ -417,7 +424,7 @@ The evaluation answers three questions:
 | **LMSYS-Chat-1M** | Realistic prompts used as seeds for the main evaluation. Access requires accepting its license on Hugging Face. |
 | **Hard test set** | Hand-written and generated pairs targeting known failure cases (below). |
 
-### Building the main query stream
+### Building the main query stream (planned; the pilot uses 40 hand-written seeds instead of LMSYS)
 
 1. **Select seeds.** Sample about 300 single-turn English prompts from LMSYS-Chat-1M. Drop prompts flagged by the dataset's moderation fields, prompts with personal data, very short or very long prompts and near-duplicates of each other.
 2. **Generate variants.** For each seed, generate labelled variants:
@@ -429,6 +436,8 @@ The evaluation answers three questions:
 5. **Reference answers.** Get a fresh large model answer for every query in the stream. These are the ground truth for quality.
 
 ### Hard test set categories
+
+Implemented as `eval/hard_set.jsonl` (118 pairs), `held_out.jsonl` (58) and `fresh.jsonl` (69). The categories below are the original plan; the sets also cover antonyms, number words, role swaps, symmetric comparisons and volatile queries.
 
 | Category | Example pair |
 |---|---|
@@ -442,9 +451,9 @@ The evaluation answers three questions:
 | Added constraint | "write a function" / "write a function with type hints" |
 | Time-sensitive | "latest Python version" / "latest Python version" (must never hit) |
 
-### Systems compared
+### Systems compared (planned)
 
-All three run on the identical query stream.
+All three would run on the identical query stream. So far the plain threshold cache is only compared on the labelled pairs, using a fixed cosine threshold of 0.85.
 
 | System | Description |
 |---|---|
@@ -454,7 +463,7 @@ All three run on the identical query stream.
 
 The threshold baseline gets its threshold tuned on the same dev split as GistCache so the comparison is fair.
 
-### Metrics
+### Metrics (planned)
 
 | Metric | Definition |
 |---|---|
@@ -467,29 +476,36 @@ The threshold baseline gets its threshold tuned on the same dev split as GistCac
 | Latency | p50 and p95, overall and per tier, including embedding and verification time |
 | Verifier accuracy | Precision, recall, F1 and ROC-AUC on Quora pairs and on each hard-set category |
 
-### Judging answer quality
+### Judging answer quality (planned design; the pilot judge is simpler)
 
-- **Judge model.** A strong model that is not the patcher model, so the patcher does not grade its own work.
+- **Judge model.** A strong model that is not the patcher model, so the patcher does not grade its own work. *The pilot judge is Claude Haiku, which is also the patcher, so pilot quality numbers are weaker evidence than this design would give.*
 - **Rubric.** The judge sees the query, the reference answer and the candidate answer. It scores 1 to 5 on correctness and on whether the answer meets every requirement in the query. A score of 4 or more passes.
-- **Fixed prompt.** The rubric prompt is versioned in `eval/prompts/judge.md` and never changes between runs.
+- **Fixed prompt.** The rubric prompt is versioned in the repo and never changes between runs. (The pilot prompt is in `eval/judge.py`: a YES/NO verdict against a fresh reference answer.)
 - **Human check.** 50 cases stratified by tier are reviewed by hand. Agreement between the judge and the human labels is reported as Cohen's kappa.
 - **Uncertainty.** Every rate is reported with a 95% bootstrap confidence interval from 1,000 resamples.
 
 ### Running the evaluation
 
+Free (no API calls):
+
 ```bash
-gistcache eval verifier --dataset qqp                 # verifier accuracy on Quora pairs
-gistcache eval seeds --source lmsys --n 300           # sample and filter seeds
-gistcache eval variants                               # generate labelled variants
-gistcache eval references                             # reference answers from the large model
-gistcache eval run --system no_cache
-gistcache eval run --system threshold
-gistcache eval run --system gistcache
-gistcache eval judge                                  # judge every candidate answer
-gistcache eval report                                 # tables, plots and confidence intervals
+python -m eval.run --file hard_set.jsonl --split all --errors   # verifier vs a threshold cache on labelled pairs
+python -m eval.borderline                                       # which pairs would reach the second opinion
+python -m eval.stream --dry-run                                 # whole pilot with fake providers
+pytest                                                          # fast suite; GISTCACHE_SLOW=1 adds the full-model pins
 ```
 
-Use `--n 50` while developing to keep costs low.
+Spends money (needs `ANTHROPIC_API_KEY`, and `ANTHROPIC_WORKSPACE_ID` if the key is not workspace-scoped; each has a hard cap):
+
+```bash
+python -m eval.stream --config configs/anthropic.yaml --n 24 --cap 0.35   # end-to-end pilot, about $0.30
+python -m eval.volatility                                                 # volatility check, under a cent
+python -m eval.borderline --live --cap 0.03                               # second opinion on the borderline band
+python -m eval.borderline_stress --live --cap 0.02                        # is the judge too eager?
+python -m eval.patcher_check --live --cap 0.08                            # patcher prompt A/B, about $0.04
+```
+
+Planned, not implemented: a single `gistcache eval ...` command group that runs the full LMSYS evaluation and produces the report tables.
 
 ## Results
 
@@ -525,7 +541,7 @@ The fresh set is the honest figure. Before the contradiction guard it was 50/69 
 
 ### Full evaluation (placeholders)
 
-> These tables fill in automatically from `gistcache eval report`. No number below is real yet.
+> These tables are for the planned full evaluation. They are empty on purpose: no number below is real yet.
 
 ### End to end
 
@@ -560,9 +576,10 @@ The fresh set is the honest figure. Before the contradiction guard it was 50/69 
 
 A full run (about 300 seeds and 1,200 queries) needs reference answers, judge calls and patch calls. With a paid provider this costs roughly a few dollars to low tens of dollars depending on current pricing and model choice. Ways to reduce it:
 
-- Develop with `--n 50`.
-- Use Ollama or a free API tier during development.
-- Run the full evaluation once at the end with your final models.
+- The pilot costs about $0.30 for 96 queries with Sonnet 5.5 and Haiku 5.5 at 300-token answers, so a 1,200-query run is roughly $4 to $5 by simple scaling (an estimate, not a measurement).
+- Develop with the free checks and `--dry-run`, and use `--n` to shrink the stream.
+- Use Ollama during development (note that small local models were not validated as judges).
+- Run the full evaluation once at the end with your final models. Every script has a hard spend cap.
 
 ## Project structure
 
@@ -574,10 +591,10 @@ gistcache/
 │   ├── normalize.py         # text normalization
 │   ├── context.py           # multi-turn fingerprinting
 │   ├── embed.py             # embedder wrapper
-│   ├── index.py             # FAISS index
+│   ├── index.py             # exact cosine top-k
 │   ├── store.py             # SQLite entries and decision log
 │   ├── verifier/
-│   │   ├── rules.py         # negation, numbers, entities, direction, versions, time
+│   │   ├── rules.py         # difference rules: negation, numbers, entities, direction, languages, time, format
 │   │   ├── cross.py         # cross-encoder scoring
 │   │   ├── guard.py         # NLI contradiction guard
 │   │   ├── borderline.py    # small-model second opinion on unsure pairs
@@ -586,13 +603,15 @@ gistcache/
 │   ├── providers/
 │   │   └── base.py          # OpenAI-compatible (also Ollama) and Anthropic
 │   ├── cost.py              # token and cost accounting
-│   └── cli.py               # serve, log, stats, purge, eval
+│   ├── config.py            # defaults and YAML loading
+│   └── cli.py               # serve, log, stats, purge
 ├── eval/
 │   ├── run.py               # verifier eval on labelled pairs vs a threshold cache
 │   ├── stream.py            # end-to-end pilot with a hard spend cap (--dry-run is free)
 │   ├── variants.py          # labelled variant generation (cached on disk)
 │   ├── judge.py             # LLM judge for reused answers
 │   ├── judge_debug.py       # re-judge pilot hits and print raw judge replies
+│   ├── patcher_check.py     # A/B of the patcher prompts on real and synthetic cases
 │   ├── volatility.py        # validates the volatility check against a real model
 │   ├── borderline.py        # lists / measures the borderline second opinion
 │   ├── borderline_stress.py # is the judge too eager to say YES? (24 near-misses, 12 paraphrases)
@@ -608,8 +627,10 @@ gistcache/
 │   ├── anthropic.yaml       # Sonnet large, Haiku small, real pricing
 │   └── ollama.yaml          # free local models, optional judges off
 ├── tests/
+├── .github/workflows/test.yml
 ├── config.example.yaml
 ├── pyproject.toml
+├── LICENSE
 └── README.md
 ```
 
@@ -642,6 +663,12 @@ Forcing every similar query through adaptation produces confident wrong answers.
 **Why not cache patched answers?**
 A patched answer was produced from another cached answer. Caching it would let small errors stack across generations. Only large model answers become cache entries by default.
 
+**Why a contradiction guard that can only veto?**
+As an equivalence check, NLI rejected true paraphrases ("tips for a job interview" is not a statement that entails another). As a contradiction detector it separated opposites ("attract / repel", "iphone / android phone") from paraphrases cleanly. Using it only as a veto keeps its strength and avoids its weakness.
+
+**Why a second opinion only on borderline pairs?**
+A model call on every candidate would add cost and latency to every hit. The cross-encoder is confident at the extremes and unsure in the middle, so only the middle is asked, after every free check has run.
+
 **Why never cache time-sensitive queries?**
 "What is the latest version" has a different correct answer next month. No similarity check can know that.
 
@@ -652,10 +679,19 @@ A patched answer was produced from another cached answer. Caching it would let s
 - **Judge reliability.** LLM judges make mistakes. The human-reviewed sample and kappa score show how far to trust them.
 - **English only.** Rules and models are tuned for English.
 - **Rule coverage.** Rules catch known difference types. New kinds of critical differences can still slip through to the cross-encoder.
-- **Single node.** FAISS and SQLite run on one machine. A shared deployment would need a networked vector store.
+- **Single node.** SQLite and in-process numpy search run on one machine. A shared deployment would need a networked store and vector index.
+- **Rule vocabularies.** The antonym lexicon, constraint phrases and volatile-topic patterns are finite word lists. The contradiction guard and the second opinion exist because of that, but they are themselves models and can be wrong.
+- **Small samples.** Every number in this README comes from at most a few hundred hand-built pairs or 96 pilot queries, written by the same author as the rules, with variants and judge from the same model family.
+- **Patcher behaviour.** Near-hits save cost but little time, the small model sometimes refuses reformatting requests, and its output varies between runs.
+- **Entities.** There is no NER model; entity swaps rely on a capitalization heuristic and the model-based layers.
 
 ## Roadmap
 
+- [ ] Full evaluation on LMSYS-Chat-1M prompts with a threshold-cache baseline, an independent judge and confidence intervals
+- [ ] Faster near-hits (edit-based patching instead of rewriting the whole answer)
+- [ ] NER for entities
+- [ ] FAISS or pgvector index for large caches
+- [ ] Automatic invalidation when the large model changes
 - [ ] Adaptive thresholds learned per query cluster
 - [ ] Feedback loop: user thumbs-down evicts an entry and adjusts thresholds
 - [ ] Redis and pgvector backends for multi-node deployments

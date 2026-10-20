@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ml = ["sentence-transformers>=3.0", "faiss-cpu>=1.8"]
+ml = ["sentence-transformers>=3.0"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]

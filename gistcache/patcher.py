@@ -2,7 +2,9 @@ from .providers import Completion, Provider
 
 CANNOT_PATCH = "CANNOT_PATCH"
 
-PROMPT = """You adapt a cached answer to a new query WITHOUT inventing facts.
+# v1 refused too often: in a pilot it answered CANNOT_PATCH to pure reformatting requests ("in a short table",
+# "as a bulleted list"), which need no new information. Kept so eval/patcher_check.py can compare the two.
+PROMPT_V1 = """You adapt a cached answer to a new query WITHOUT inventing facts.
 Rules:
 1. Preserve everything in the cached answer that is still valid for the new query.
 2. Change only what the listed differences require.
@@ -16,13 +18,43 @@ Cached answer:
 New query: {new_q}
 Differences: {diffs}"""
 
+PROMPT = """You adapt a cached answer so that it answers a new query. The new query differs from the cached one
+only in the ways listed under "Differences".
 
-def patch(provider: Provider, old_q: str, answer: str, new_q: str, diffs: list, max_ratio: float
-          ) -> tuple[str | None, Completion | None]:
+You MAY (none of this counts as inventing facts):
+- Restructure what is already there: turn prose into a table, a bulleted or numbered list, JSON or a paragraph;
+  reorder items; change the sort order.
+- Condense: shorten, summarize or keep only the key points when asked to be brief or concise; simplify the
+  wording or tone using only the ideas already present.
+- Apply a narrowing constraint by selecting the part of the cached answer that satisfies it.
+
+You MUST NOT:
+- Add facts, steps, numbers, names, examples or code that are not in the cached answer.
+- Change the meaning of anything you keep.
+
+Reply with exactly {cp} (and nothing else) only if a correct answer would need content the cached answer does not
+contain, such as a new example, a new comparison, or extra detail. A request to present the existing content
+differently is NOT new information, so do that.
+
+Output only the adapted answer: no preamble, no explanation, no mention of the cache.
+
+Original query: {old_q}
+Cached answer:
+{answer}
+
+New query: {new_q}
+Differences: {diffs}"""
+
+
+PROMPTS = {"v1": PROMPT_V1, "v2": PROMPT}
+
+
+def patch(provider: Provider, old_q: str, answer: str, new_q: str, diffs: list, max_ratio: float,
+          prompt: str = PROMPT) -> tuple[str | None, Completion | None]:
     """Return (patched text or None if rejected, raw completion for cost accounting)."""
-    prompt = PROMPT.format(cp=CANNOT_PATCH, old_q=old_q, answer=answer, new_q=new_q,
-                           diffs="; ".join(str(d) for d in diffs))
-    c = provider.complete([{"role": "user", "content": prompt}])
+    text = prompt.format(cp=CANNOT_PATCH, old_q=old_q, answer=answer, new_q=new_q,
+                         diffs="; ".join(str(d) for d in diffs))
+    c = provider.complete([{"role": "user", "content": text}])
     return (validate(c.text, answer, new_q, max_ratio), c)
 
 

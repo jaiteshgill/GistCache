@@ -14,15 +14,18 @@ def _parse_age(s: str) -> int:
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="gistcache")
-    p.add_argument("--config", default=None)
+    # --config is accepted before or after the subcommand: `gistcache --config c.yaml serve` and
+    # `gistcache serve --config c.yaml`. SUPPRESS keeps a value given before the subcommand from being reset.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--config", default=argparse.SUPPRESS, help="path to a YAML config")
+    p = argparse.ArgumentParser(prog="gistcache", parents=[common])
     sub = p.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("serve"); s.add_argument("--port", type=int, default=8100); s.add_argument("--host", default="127.0.0.1")
-    l = sub.add_parser("log"); l.add_argument("--last", type=int, default=10)
-    sub.add_parser("stats")
-    pu = sub.add_parser("purge"); pu.add_argument("--scope"); pu.add_argument("--older-than")
+    s = sub.add_parser("serve", parents=[common]); s.add_argument("--port", type=int, default=8100); s.add_argument("--host", default="127.0.0.1")
+    l = sub.add_parser("log", parents=[common]); l.add_argument("--last", type=int, default=10)
+    sub.add_parser("stats", parents=[common])
+    pu = sub.add_parser("purge", parents=[common]); pu.add_argument("--scope"); pu.add_argument("--older-than")
     a = p.parse_args(argv)
-    cfg = load_config(a.config)
+    cfg = load_config(getattr(a, "config", None))  # absent when --config was not given anywhere
 
     if a.cmd == "serve":
         import uvicorn

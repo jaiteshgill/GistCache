@@ -108,7 +108,8 @@ class Pipeline:
 
         if decision.tier == NEAR_HIT and cand and self.small and cfg["patcher"]["enabled"]:
             patched, c = patcher.patch(self.small, cand.query, cand.answer, query, decision.differences,
-                                       cfg["patcher"]["max_length_ratio"])
+                                       cfg["patcher"]["max_length_ratio"],
+                                       prompt=patcher.PROMPTS[cfg["patcher"].get("prompt", "v1")])
             cost += cost_usd(pricing, "small", c.in_tokens, c.out_tokens)
             if patched is not None:
                 self.store.touch(cand.id)

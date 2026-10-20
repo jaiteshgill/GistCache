@@ -104,3 +104,25 @@ def test_ollama_config_uses_the_local_endpoint_and_leaves_unvalidated_judges_off
 def test_anthropic_config_builds_the_anthropic_provider(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     assert isinstance(build_provider(load_config("configs/anthropic.yaml")["providers"]["large"]), Anthropic)
+
+
+def test_config_flag_works_before_or_after_the_subcommand(cfg_path, capsys):
+    cfg, db = cfg_path
+    seeded(db)
+    cli.main(["--config", cfg, "stats"])          # before
+    before = capsys.readouterr().out
+    cli.main(["stats", "--config", cfg])          # after (what the README shows)
+    after = capsys.readouterr().out
+    assert before == after and "hit" in after
+
+
+def test_serve_accepts_config_after_the_subcommand(cfg_path, monkeypatch):
+    import uvicorn
+    from gistcache import server
+    cfg, _ = cfg_path
+    got = {}
+    monkeypatch.setattr(server, "build_pipeline", lambda c: got.update(path=c["cache"]["path"]) or "pipeline")
+    monkeypatch.setattr(server, "create_app", lambda p: p)
+    monkeypatch.setattr(uvicorn, "run", lambda *a, **k: None)
+    cli.main(["serve", "--config", cfg, "--port", "9001"])
+    assert got["path"].endswith("g.db")  # the config file was actually read

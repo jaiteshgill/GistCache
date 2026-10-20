@@ -31,6 +31,7 @@ patcher:
   enabled: true
   max_length_ratio: 1.5
   cache_patched_answers: false
+  prompt: v1                   # v1 = strict original; v2 = allows pure reformatting (validate with eval.patcher_check)
 
 cache:
   path: ./data/gistcache.db
