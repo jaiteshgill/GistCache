@@ -1,0 +1,58 @@
+{"id": "antonym-00", "category": "antonym", "cached": "how do I allow cookies in chrome", "new": "how do I block cookies in chrome", "expected": "miss", "split": "heldout"}
+{"id": "antonym-01", "category": "antonym", "cached": "is it legal to record phone calls", "new": "is it illegal to record phone calls", "expected": "miss", "split": "heldout"}
+{"id": "antonym-02", "category": "antonym", "cached": "how to increase the font size in word", "new": "how to decrease the font size in word", "expected": "miss", "split": "heldout"}
+{"id": "antonym-03", "category": "antonym", "cached": "how to win at chess quickly", "new": "how to lose at chess quickly", "expected": "miss", "split": "heldout"}
+{"id": "antonym-04", "category": "antonym", "cached": "how do I lock my screen on a mac", "new": "how do I unlock my screen on a mac", "expected": "miss", "split": "heldout"}
+{"id": "antonym-05", "category": "antonym", "cached": "how to speed up my laptop", "new": "how to slow down my laptop", "expected": "miss", "split": "heldout"}
+{"id": "antonym-06", "category": "antonym", "cached": "should I buy or hold this stock", "new": "should I sell this stock", "expected": "miss", "split": "heldout"}
+{"id": "antonym-07", "category": "antonym", "cached": "how do I show hidden files", "new": "how do I hide files", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-00", "category": "number_variant", "cached": "give me three reasons to learn rust", "new": "give me five reasons to learn rust", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-01", "category": "number_variant", "cached": "how long should I take this medicine if it is once a day", "new": "how long should I take this medicine if it is three times a day", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-02", "category": "number_variant", "cached": "what happened on march 3", "new": "what happened on march 5", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-03", "category": "number_variant", "cached": "explain the 1st amendment", "new": "explain the 2nd amendment", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-04", "category": "number_variant", "cached": "a recipe that serves two", "new": "a recipe that serves twelve", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-05", "category": "number_variant", "cached": "how to dress for 10 degrees", "new": "how to dress for minus 10 degrees", "expected": "miss", "split": "heldout"}
+{"id": "number_variant-06", "category": "number_variant", "cached": "summarize chapter 4 of the book", "new": "summarize chapter 9 of the book", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-00", "category": "entity_lowercase", "cached": "weather in toronto", "new": "weather in waterloo", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-01", "category": "entity_lowercase", "cached": "how do i bake a cake", "new": "how do i bake bread", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-02", "category": "entity_lowercase", "cached": "what is the best phone for photos, iphone or pixel", "new": "what is the best phone for gaming, iphone or pixel", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-03", "category": "entity_lowercase", "cached": "how to make pizza dough", "new": "how to make pasta dough", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-04", "category": "entity_lowercase", "cached": "tell me about dogs", "new": "tell me about cats", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-05", "category": "entity_lowercase", "cached": "how do i get to the airport from downtown", "new": "how do i get to the hospital from downtown", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-06", "category": "entity_lowercase", "cached": "best laptop for students", "new": "best laptop for gamers", "expected": "miss", "split": "heldout"}
+{"id": "entity_lowercase-07", "category": "entity_lowercase", "cached": "treatment for a headache", "new": "treatment for a migraine", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-00", "category": "role_swap", "cached": "google sued oracle, who won", "new": "oracle sued google, who won", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-01", "category": "role_swap", "cached": "why did france invade russia", "new": "why did russia invade france", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-02", "category": "role_swap", "cached": "how does a dog differ from a wolf in diet", "new": "how does a wolf differ from a dog in diet", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-03", "category": "role_swap", "cached": "who was taller, lincoln or douglas", "new": "who was taller, douglas or lincoln", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-04", "category": "role_swap", "cached": "how to hire a lawyer as a landlord", "new": "how to hire a lawyer as a tenant", "expected": "miss", "split": "heldout"}
+{"id": "role_swap-05", "category": "role_swap", "cached": "what does the doctor owe the patient", "new": "what does the patient owe the doctor", "expected": "miss", "split": "heldout"}
+{"id": "language_edge-00", "category": "language_edge", "cached": "how to write a function in c", "new": "how to write a function in c++", "expected": "miss", "split": "heldout"}
+{"id": "language_edge-01", "category": "language_edge", "cached": "python 2.7 string formatting", "new": "python 3.8 string formatting", "expected": "miss", "split": "heldout"}
+{"id": "language_edge-02", "category": "language_edge", "cached": "how do i use es5 classes", "new": "how do i use es6 classes", "expected": "miss", "split": "heldout"}
+{"id": "language_edge-03", "category": "language_edge", "cached": "read a csv in java", "new": "read a csv in javascript", "expected": "miss", "split": "heldout"}
+{"id": "language_edge-04", "category": "language_edge", "cached": "bootstrap 3 grid system", "new": "bootstrap 5 grid system", "expected": "miss", "split": "heldout"}
+{"id": "implicit_time-00", "category": "implicit_time", "cached": "what is the exchange rate between usd and cad", "new": "what is the exchange rate between usd and cad?", "expected": "miss", "split": "heldout"}
+{"id": "implicit_time-01", "category": "implicit_time", "cached": "who is the ceo of twitter", "new": "who is the ceo of twitter?", "expected": "miss", "split": "heldout"}
+{"id": "implicit_time-02", "category": "implicit_time", "cached": "is the store open", "new": "is the store open?", "expected": "miss", "split": "heldout"}
+{"id": "implicit_time-03", "category": "implicit_time", "cached": "what time is it in tokyo", "new": "what time is it in tokyo?", "expected": "miss", "split": "heldout"}
+{"id": "patchable_mixed-00", "category": "patchable_mixed", "cached": "how do I sort users by signup date", "new": "how do I sort users by signup date newest first", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-01", "category": "patchable_mixed", "cached": "explain how vaccines work", "new": "explain how vaccines work in one paragraph", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-02", "category": "patchable_mixed", "cached": "what is a mutex", "new": "what is a mutex, with an example", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-03", "category": "patchable_mixed", "cached": "how to write a for loop in python", "new": "how to write a for loop in python with comments", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-04", "category": "patchable_mixed", "cached": "list the benefits of exercise", "new": "list the benefits of exercise in bullet form", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-05", "category": "patchable_mixed", "cached": "what is the pythagorean theorem", "new": "what is the pythagorean theorem, explain simply", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-06", "category": "patchable_mixed", "cached": "compare react and vue", "new": "compare react and vue in a table", "expected": "near_hit", "split": "heldout"}
+{"id": "patchable_mixed-07", "category": "patchable_mixed", "cached": "how does a bill become law", "new": "how does a bill become law, short version", "expected": "near_hit", "split": "heldout"}
+{"id": "paraphrase_hard-00", "category": "paraphrase_hard", "cached": "how do i get rid of a cold quickly", "new": "what are the fastest ways to cure a cold", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-01", "category": "paraphrase_hard", "cached": "what's the difference between a list and a tuple", "new": "tuple versus list: what differs", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-02", "category": "paraphrase_hard", "cached": "how do I cancel my subscription", "new": "i want to cancel my subscription, what do i do", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-03", "category": "paraphrase_hard", "cached": "tell me the difference between tcp and udp", "new": "tcp and udp difference", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-04", "category": "paraphrase_hard", "cached": "my laptop wont turn on", "new": "laptop does not power on, what should i do", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-05", "category": "paraphrase_hard", "cached": "why is the sky blue", "new": "what makes the sky look blue", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-06", "category": "paraphrase_hard", "cached": "how do i learn guitar as an adult", "new": "tips for learning guitar as an adult beginner", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-07", "category": "paraphrase_hard", "cached": "difference between a and b in sql join", "new": "sql join: what differs between a and b", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-08", "category": "paraphrase_hard", "cached": "how to centre text in html", "new": "how do i center text in html", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-09", "category": "paraphrase_hard", "cached": "what is machine learning", "new": "can you explain machine learning to me", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-10", "category": "paraphrase_hard", "cached": "how do i make my resume stand out", "new": "ways to make my resume stand out", "expected": "hit", "split": "heldout"}
+{"id": "paraphrase_hard-11", "category": "paraphrase_hard", "cached": "how do i fix a leaking tap", "new": "my tap is leaking, how do i fix it", "expected": "hit", "split": "heldout"}

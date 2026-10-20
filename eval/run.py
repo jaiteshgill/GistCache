@@ -67,14 +67,15 @@ def report(res, show_errors):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--split", choices=["dev", "test", "all"], default="dev")
+    p.add_argument("--file", default="hard_set.jsonl", help="hard_set.jsonl or held_out.jsonl")
+    p.add_argument("--split", choices=["dev", "test", "heldout", "all"], default="dev")
     p.add_argument("--config")
     p.add_argument("--hash", action="store_true", help="use the dependency-free fallback models")
     p.add_argument("--baseline-threshold", type=float, default=0.85)
     p.add_argument("--errors", action="store_true")
     a = p.parse_args()
     cfg = load_config(a.config)
-    rows = [json.loads(l) for l in (Path(__file__).parent / "hard_set.jsonl").read_text().splitlines()]
+    rows = [json.loads(l) for l in (Path(__file__).parent / a.file).read_text().splitlines()]
     if a.split != "all":
         rows = [r for r in rows if r["split"] == a.split]
     emb, sc = load_models(not a.hash)
