@@ -1,0 +1,23 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      # No [ml] extras: the fast suite uses mock providers and a dependency-free embedder.
+      # The full-pipeline tier pins need real models and run locally with GISTCACHE_SLOW=1.
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
