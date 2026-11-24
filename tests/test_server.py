@@ -127,3 +127,9 @@ def test_failed_request_is_not_cached():
     chat(c, "how do I reset my password")
     large.reply = "L" * 80
     assert chat(c, "how do I reset my password").headers["x-gistcache-tier"] == "miss"
+
+
+def test_healthz_reports_ok():
+    c, *_ = make_client()
+    r = c.get("/healthz")
+    assert r.status_code == 200 and r.json() == {"status": "ok"}

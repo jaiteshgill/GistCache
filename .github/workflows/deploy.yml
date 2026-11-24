@@ -1,0 +1,109 @@
+name: deploy
+
+# Every push to main: test -> build image -> push to ACR -> roll out a new Container Apps
+# revision -> wait for it to be healthy -> roll back if it isn't.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# One deploy at a time; a newer push waits rather than racing the current one.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # lets the job request a GitHub OIDC token to sign in to Azure
+
+env:
+  RESOURCE_GROUP: rg-gistcache
+  APP_NAME: gistcache
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  build-and-push:
+    needs: test
+    # Skip cleanly until the Azure infrastructure exists and the repo variables are set.
+    if: vars.AZURE_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az acr login --name ${{ vars.ACR_NAME }}
+
+      - id: meta
+        run: echo "image=${{ vars.ACR_NAME }}.azurecr.io/gistcache:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Layer cache in GitHub Actions: the PyTorch and model layers rebuild only when
+      # dependencies change, so a code-only push builds in about a minute.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Roll out new revision
+        env:
+          IMAGE: ${{ needs.build-and-push.outputs.image }}
+        run: |
+          az extension add --name containerapp --upgrade --yes --only-show-errors
+
+          PREVIOUS=$(az containerapp show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+            --query "properties.template.containers[0].image" -o tsv)
+          echo "previous image: $PREVIOUS"
+
+          SUFFIX="r${GITHUB_SHA::7}"
+          az containerapp update -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+            --image "$IMAGE" --revision-suffix "$SUFFIX" --only-show-errors -o none
+          REVISION="$APP_NAME--$SUFFIX"
+
+          # Wait for the startup probe (/healthz) to pass. Up to 10 minutes.
+          for _ in $(seq 1 60); do
+            HEALTH=$(az containerapp revision show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+              --revision "$REVISION" --query "properties.healthState" -o tsv)
+            RUNNING=$(az containerapp revision show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+              --revision "$REVISION" --query "properties.runningState" -o tsv)
+            echo "$REVISION health=$HEALTH running=$RUNNING"
+            [ "$HEALTH" = "Healthy" ] && { echo "deployed $IMAGE"; exit 0; }
+            case "$RUNNING" in Failed|Degraded) break ;; esac
+            sleep 10
+          done
+
+          echo "::error::revision $REVISION never became healthy, rolling back to $PREVIOUS"
+          az containerapp update -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+            --image "$PREVIOUS" --revision-suffix "rb${GITHUB_SHA::7}" --only-show-errors -o none
+          exit 1

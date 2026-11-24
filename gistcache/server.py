@@ -34,6 +34,13 @@ def build_pipeline(cfg: dict) -> Pipeline:
 def create_app(pipeline: Pipeline) -> FastAPI:
     app = FastAPI(title="GistCache")
 
+    @app.get("/healthz")
+    def healthz():
+        # Liveness check for Docker, load balancers and the deploy pipeline. Touches the cache
+        # store so a broken disk or database shows up as unhealthy, not just a dead process.
+        pipeline.store.stats()
+        return {"status": "ok"}
+
     @app.get("/v1/models")
     def models():
         return {"object": "list", "data": [{"id": "gistcache", "object": "model", "owned_by": "gistcache"}]}

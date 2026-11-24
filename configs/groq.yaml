@@ -1,0 +1,55 @@
+# Groq setup: free tier, no card, OpenAI-compatible API.
+#   Get a key at console.groq.com, then:
+#   export GROQ_API_KEY=gsk_...
+#   gistcache --config configs/groq.yaml serve --port 8100
+# Model names change: check console.groq.com/docs/models and edit below if one is retired.
+# Second-opinion features stay OFF, as with Ollama: they were only validated with Claude Haiku.
+providers:
+  large:
+    kind: openai
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.3-70b-versatile
+    api_key_env: GROQ_API_KEY
+  small:
+    kind: openai
+    base_url: https://api.groq.com/openai/v1
+    model: llama-3.1-8b-instant
+    api_key_env: GROQ_API_KEY
+
+embedder:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  device: cpu
+
+verifier:
+  cross_encoder: cross-encoder/quora-distilroberta-base
+  hit_threshold: 0.90
+  near_threshold: 0.70
+  top_k: 5
+  strict_content_check: true
+  nli_guard: cross-encoder/nli-deberta-v3-small
+  contradiction_threshold: 0.5
+  borderline_judge: false
+  borderline_low: 0.3
+
+patcher:
+  enabled: true
+  max_length_ratio: 1.5
+  cache_patched_answers: false
+  prompt: v2                   # v2 = pure reformatting is allowed (default); v1 = the strict original
+
+cache:
+  path: ./data/gistcache.db
+  max_entries: 100000
+  default_ttl_seconds: null
+  volatility_check: false
+
+bypass:
+  max_temperature: 0.7
+  with_tools: true
+
+multi_turn:
+  context_turns: 4
+
+pricing:                     # Groq free tier: rate-limited, no per-token charge
+  large: { input: 0.0, output: 0.0 }
+  small: { input: 0.0, output: 0.0 }

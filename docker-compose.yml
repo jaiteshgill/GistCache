@@ -1,0 +1,18 @@
+# Local run: `docker compose up --build`, then curl localhost:8100/healthz
+# Needs ANTHROPIC_API_KEY (or GROQ_API_KEY plus GISTCACHE_CONFIG=configs/groq.yaml) in a .env file (git-ignored).
+services:
+  gistcache:
+    build: .
+    image: gistcache:local
+    ports:
+      - "8100:8100"
+    environment:
+      - GROQ_API_KEY
+      - ANTHROPIC_API_KEY
+      - GISTCACHE_CONFIG=${GISTCACHE_CONFIG:-configs/anthropic.yaml}
+    volumes:
+      - gistcache-data:/app/data   # named volume: the cache survives container restarts and rebuilds
+    restart: unless-stopped
+
+volumes:
+  gistcache-data:

@@ -8,3 +8,8 @@ config.yaml
 eval/results/*.jsonl
 eval/results/*.local.md
 eval/results/*_dry.*
+.env
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
