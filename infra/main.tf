@@ -218,7 +218,7 @@ resource "azurerm_federated_identity_credential" "github_main" {
   parent_id           = azurerm_user_assigned_identity.deployer.id
   issuer              = "https://token.actions.githubusercontent.com"
   audience            = ["api://AzureADTokenExchange"]
-  subject             = "repo:${var.github_repo}:ref:refs/heads/main"
+  subject             = "repo:jaiteshgill@134865265/GistCache@1426640205:ref:refs/heads/main"
 }
 
 resource "azurerm_role_assignment" "deployer_acr_push" {
