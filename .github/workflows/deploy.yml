@@ -86,17 +86,20 @@ jobs:
             --query "properties.template.containers[0].image" -o tsv)
           echo "previous image: $PREVIOUS"
 
-          SUFFIX="r${GITHUB_SHA::7}"
+          # Express environments don't allow custom revision names, so let Azure
+          # name the revision and read the name back.
           az containerapp update -n "$APP_NAME" -g "$RESOURCE_GROUP" \
-            --image "$IMAGE" --revision-suffix "$SUFFIX" --only-show-errors -o none
-          REVISION="$APP_NAME--$SUFFIX"
+            --image "$IMAGE" --only-show-errors -o none
+          REVISION=$(az containerapp show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
+            --query "properties.latestRevisionName" -o tsv)
+          echo "new revision: $REVISION"
 
           # Wait for the startup probe (/healthz) to pass. Up to 10 minutes.
           for _ in $(seq 1 60); do
             HEALTH=$(az containerapp revision show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
-              --revision "$REVISION" --query "properties.healthState" -o tsv)
+              --revision "$REVISION" --query "properties.healthState" -o tsv || true)
             RUNNING=$(az containerapp revision show -n "$APP_NAME" -g "$RESOURCE_GROUP" \
-              --revision "$REVISION" --query "properties.runningState" -o tsv)
+              --revision "$REVISION" --query "properties.runningState" -o tsv || true)
             echo "$REVISION health=$HEALTH running=$RUNNING"
             [ "$HEALTH" = "Healthy" ] && { echo "deployed $IMAGE"; exit 0; }
             case "$RUNNING" in Failed|Degraded) break ;; esac
@@ -105,5 +108,5 @@ jobs:
 
           echo "::error::revision $REVISION never became healthy, rolling back to $PREVIOUS"
           az containerapp update -n "$APP_NAME" -g "$RESOURCE_GROUP" \
-            --image "$PREVIOUS" --revision-suffix "rb${GITHUB_SHA::7}" --only-show-errors -o none
+            --image "$PREVIOUS" --only-show-errors -o none
           exit 1
