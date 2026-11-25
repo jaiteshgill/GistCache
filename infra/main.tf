@@ -1,6 +1,6 @@
 # GistCache on Azure: Azure Container Apps runs the container, images live in Azure
 # Container Registry, the API key lives in Key Vault, logs go to Log Analytics, and
-# GitHub Actions deploys through OIDC (workload identity federation). No passwords or
+# GitHub Actions deploys through OIDC (workload identity federation). No stored passwords or
 # client secrets exist anywhere: every service authenticates with a managed identity.
 
 terraform {
@@ -65,8 +65,7 @@ resource "azurerm_key_vault" "kv" {
   soft_delete_retention_days = 7
 }
 
-# You (whoever runs Terraform) can write the secret by hand. The key is never in Terraform.
-resource "azurerm_role_assignment" "me_kv_officer" {
+# Lets you (whoever runs Terraform) write the secret by hand and Terraform read it back.resource "azurerm_role_assignment" "me_kv_officer" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.me.object_id
@@ -116,11 +115,12 @@ resource "azurerm_container_app" "app" {
     identity = azurerm_user_assigned_identity.app.id
   }
 
-  # A reference to Key Vault, not a copy: rotate the key in Key Vault and the app picks it up.
+  # Express environments don't support Key Vault references, so Terraform reads the
+  # value from Key Vault (the source of truth) and passes it in. Trade-off: the key
+  # also lands in Terraform state, which is local and git-ignored.
   secret {
-    name                = "llm-api-key"
-    key_vault_secret_id = "${azurerm_key_vault.kv.vault_uri}secrets/llm-api-key"
-    identity            = azurerm_user_assigned_identity.app.id
+    name  = "llm-api-key"
+    value = data.azurerm_key_vault_secret.llm_api_key.value
   }
 
   ingress {
@@ -233,4 +233,22 @@ resource "azurerm_role_assignment" "deployer_rg" {
   scope                = azurerm_resource_group.rg.id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.deployer.principal_id
+}
+
+
+# Jobs that use a GitHub environment present the environment in their token,
+# not the branch, so the deploy job needs its own trust rule.
+resource "azurerm_federated_identity_credential" "github_production" {
+  name                = "github-production"
+  resource_group_name = azurerm_resource_group.rg.name
+  parent_id           = azurerm_user_assigned_identity.deployer.id
+  issuer              = "https://token.actions.githubusercontent.com"
+  audience            = ["api://AzureADTokenExchange"]
+  subject             = "repo:jaiteshgill@134865265/GistCache@1426640205:environment:production"
+}
+
+
+data "azurerm_key_vault_secret" "llm_api_key" {
+  name         = "llm-api-key"
+  key_vault_id = azurerm_key_vault.kv.id
 }
